@@ -1,3 +1,11 @@
+// Copyright (c) 2024 Sony Corporation
+//
+// This source code is unlicensed and all use is prohibited without the express permission of the copyright
+// holder.
+//
+// Unauthorized copying of this file, via any medium is strictly prohibited.
+// Proprietary and confidential.
+
 #include "olfactory_device_wrapper.h"
 
 #include <string>
@@ -24,15 +32,15 @@ bool IsRuntimeLibraryValid() { return handle != nullptr; }
 
 /** Defines the type of function to get */
 #define DLL_FUNC_DEFINE(name, ...)            \
-  using name##_t = HwResult (*)(__VA_ARGS__); \
+  using name##_t = OdResult (*)(__VA_ARGS__); \
   name##_t name = nullptr;
 
-DLL_FUNC_DEFINE(sony_training_hwGetMessage, const uint32_t size, char*)
+DLL_FUNC_DEFINE(sony_odGetMessage, const uint32_t size, char*)
 
 /** Get the installation path from a registry key */
 std::wstring GetInstallPath() {
   HKEY hkey = HKEY_LOCAL_MACHINE;
-  const std::wstring sub_key = std::wstring(L"SOFTWARE\\Sony Corporation\\Training");
+  const std::wstring sub_key = std::wstring(L"SOFTWARE\\Sony Corporation\\OlfactoryDevice");
   const std::wstring value = L"Path";
 
   DWORD data_size{};
@@ -60,39 +68,39 @@ std::wstring GetInstallPath() {
   return data;
 }
 
-}
+}  // namespace
 
-namespace sony::training::hello_world {
+namespace sony::olfactory_device {
 
-HwResult LoadRuntimeLibrary() {
+OdResult LoadRuntimeLibrary() {
   if (handle) {
-    return HwResult::SUCCESS;
+    return OdResult::SUCCESS;
   }
 
   std::wstring directry = GetInstallPath();
-  std::wstring path = directry + L"lib\\hello_world.dll";
+  std::wstring path = directry + L"lib\\olfactory_device.dll";
   handle = ::LoadLibraryW(path.c_str());
 
   if (handle == nullptr) {
-    std::wstring message = L"Failed to load hello_world.dll.\n Please check " + path;
+    std::wstring message = L"Failed to load olfactory_device.dll.\n Please check " + path;
     ::MessageBoxW(NULL, message.c_str(), L"Error", 0);
-    return HwResult::ERROR_LIBRARY_NOT_FOUND;
+    return OdResult::ERROR_LIBRARY_NOT_FOUND;
   }
 
 #define GET_FUNCTION(name)                        \
   name = (name##_t)GetProcAddress(handle, #name); \
   if (!name) {                                    \
-    return HwResult::ERROR_FUNCTION_UNSUPPORTED;  \
+    return OdResult::ERROR_FUNCTION_UNSUPPORTED;  \
   }
 
 #pragma warning(push)
 #pragma warning(disable : 4191)
-  GET_FUNCTION(sony_training_hwGetMessage);
+  GET_FUNCTION(sony_odGetMessage);
 #pragma warning(pop)
 
 #undef GET_FUNCTION
 
-  return HwResult::SUCCESS;
+  return OdResult::SUCCESS;
 }
 
 void UnloadRuntimeLibrary() {
@@ -100,16 +108,16 @@ void UnloadRuntimeLibrary() {
   handle = nullptr;
 }
 
-HwResult GetMessage(const uint32_t size, char* msg_buf) {
+OdResult GetMessage(const uint32_t size, char* msg_buf) {
   if (IsRuntimeLibraryValid() == false) {
-    return HwResult::ERROR_LIBRARY_NOT_FOUND;
+    return OdResult::ERROR_LIBRARY_NOT_FOUND;
   }
 
-  if (sony_training_hwGetMessage == nullptr) {
-    return HwResult::ERROR_FUNCTION_UNSUPPORTED;
+  if (sony_odGetMessage == nullptr) {
+    return OdResult::ERROR_FUNCTION_UNSUPPORTED;
   }
 
-  return sony_training_hwGetMessage(size, msg_buf);
+  return sony_odGetMessage(size, msg_buf);
 }
 
-}
+}  // namespace sony::olfactory_device
