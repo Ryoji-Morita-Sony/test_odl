@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hello_world_api_defs.h"
+#include "olfactory_device_api_defs.h"
 
 namespace sony::training::hello_world {
 

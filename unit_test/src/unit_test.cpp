@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "hello_world_api.h"
+#include "olfactory_device_api.h"
 using namespace sony::training::hello_world;
 
 #include <stdio.h>

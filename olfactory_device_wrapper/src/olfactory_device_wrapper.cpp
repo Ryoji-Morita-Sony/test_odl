@@ -1,4 +1,4 @@
-#include "hello_world_wrapper.h"
+#include "olfactory_device_wrapper.h"
 
 #include <string>
 
