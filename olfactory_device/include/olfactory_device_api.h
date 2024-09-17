@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "olfactory_device_api_defs.h"
 
