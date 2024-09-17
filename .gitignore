@@ -1,0 +1,20 @@
+# Ignore solution files and vc project files.
+.vs/*
+*.sln
+*.vcxproj*
+*.aps
+
+# Ignore build result files in bin directory.
+bin/*
+
+# Ignore intermediate files in intermediate directory.
+intermediate/*
+
+# Ignore files in default install directory.
+install/*
+
+# Ignore files in build directory.
+build/*
+
+# Ignore files in doxygen directory.
+doxygen/*
