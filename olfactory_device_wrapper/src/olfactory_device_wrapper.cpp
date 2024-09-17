@@ -35,7 +35,8 @@ bool IsRuntimeLibraryValid() { return handle != nullptr; }
   using name##_t = OdResult (*)(__VA_ARGS__); \
   name##_t name = nullptr;
 
-DLL_FUNC_DEFINE(sony_odGetMessage, const uint32_t size, char*)
+DLL_FUNC_DEFINE(sony_odStartScentEmission, int, const char*, int)
+DLL_FUNC_DEFINE(sony_odStopScentEmission)
 
 /** Get the installation path from a registry key */
 std::wstring GetInstallPath() {
@@ -95,7 +96,8 @@ OdResult LoadRuntimeLibrary() {
 
 #pragma warning(push)
 #pragma warning(disable : 4191)
-  GET_FUNCTION(sony_odGetMessage);
+  GET_FUNCTION(sony_odStartScentEmission);
+  GET_FUNCTION(sony_odStopScentEmission);
 #pragma warning(pop)
 
 #undef GET_FUNCTION
@@ -108,16 +110,28 @@ void UnloadRuntimeLibrary() {
   handle = nullptr;
 }
 
-OdResult GetMessage(const uint32_t size, char* msg_buf) {
-  if (IsRuntimeLibraryValid() == false) {
+OdResult StartScentEmission(int device_id, const char* scent_name, int intensity) {
+  if (!IsRuntimeLibraryValid()) {
     return OdResult::ERROR_LIBRARY_NOT_FOUND;
   }
 
-  if (sony_odGetMessage == nullptr) {
+  if (sony_odStartScentEmission == nullptr) {
     return OdResult::ERROR_FUNCTION_UNSUPPORTED;
   }
 
-  return sony_odGetMessage(size, msg_buf);
+  return sony_odStartScentEmission(device_id, scent_name, intensity);
+}
+
+OdResult StopScentEmission() {
+  if (!IsRuntimeLibraryValid()) {
+    return OdResult::ERROR_LIBRARY_NOT_FOUND;
+  }
+
+  if (sony_odStopScentEmission == nullptr) {
+    return OdResult::ERROR_FUNCTION_UNSUPPORTED;
+  }
+
+  return sony_odStopScentEmission();
 }
 
 }  // namespace sony::olfactory_device

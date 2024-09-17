@@ -1,4 +1,4 @@
-// Copyright (c) 2024 Sony Corporation
+ï»¿// Copyright (c) 2024 Sony Corporation
 //
 // This source code is unlicensed and all use is prohibited without the express permission of the copyright
 // holder.
@@ -13,22 +13,29 @@
 namespace sony::olfactory_device {
 
 /**
- * @brief ƒ‰ƒCƒuƒ‰ƒŠ‚ğƒ[ƒh‚·‚éB
+ * @brief ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã‚’ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ã€‚
  * @return OdResult
  */
 OdResult LoadRuntimeLibrary();
 
 /**
- * @brief ƒ‰ƒCƒuƒ‰ƒŠ‚ğƒAƒ“ƒ[ƒh‚·‚éB
+ * @brief ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã‚’ã‚¢ãƒ³ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ã€‚
  */
 void UnloadRuntimeLibrary();
 
 /**
- * @brief ƒƒbƒZ[ƒW"Olfactory Device"‚ğ•Ô‚·
- * @param[in]  size msg_buf‚ÌƒTƒCƒY
- * @param[out] msg_buf  ƒƒbƒZ[ƒW‚Ì•¶š—ñ‚ğŠi”[‚·‚éƒoƒbƒtƒ@B‚ ‚ç‚©‚¶‚ßƒƒ‚ƒŠ‚ğŠm•Û‚·‚é‚±‚Æ
+ * @brief åŒ‚ã„ã®æ”¾å‡ºã‚’é–‹å§‹ã™ã‚‹
+ * @param[in] device_id ãƒ‡ãƒã‚¤ã‚¹ã®ID
+ * @param[in] scent_name åŒ‚ã„ã®åç§°
+ * @param[in] intensity åŒ‚ã„ã®å¼·åº¦ï¼ˆä¾‹: 0ã€œ100ï¼‰
  * @return OdResult
  */
-OdResult GetMessage(const uint32_t size, char* msg_buf);
+OdResult StartScentEmission(int device_id, const char* scent_name, int intensity);
+
+/**
+ * @brief åŒ‚ã„ã®æ”¾å‡ºã‚’åœæ­¢ã™ã‚‹
+ * @return OdResult
+ */
+OdResult StopScentEmission();
 
 }  // namespace sony::olfactory_device

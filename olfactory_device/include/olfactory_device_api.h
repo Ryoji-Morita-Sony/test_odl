@@ -13,11 +13,19 @@
 namespace sony::olfactory_device {
 
 /**
- * @brief メッセージ"Olfactory Device"を返す
- * @param[in]  size msg_bufのサイズ
- * @param[out] msg_buf  メッセージの文字列を格納するバッファ。あらかじめメモリを確保すること
- * @return OlfactoryDeviceResult
+ * @brief 匂いの放出を開始する
+ * @param[in] device_id デバイスのID
+ * @param[in] scent_name 匂いの名称
+ * @param[in] intensity 匂いの強度（例: 0〜100）
+ * @return OdResult
  */
-OLFACTORY_DEVICE_API OdResult sony_odGetMessage(const uint32_t size, char* msg_buf);
+OLFACTORY_DEVICE_API OdResult StartScentEmission(int device_id, const char* scent_name, int intensity);
+
+
+/**
+ * @brief 芳香の放出を停止する
+ * @return OdResult
+ */
+OLFACTORY_DEVICE_API OdResult StopScentEmission();
 
 }  // namespace sony::olfactory_device
