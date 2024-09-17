@@ -34,7 +34,7 @@ add_executable(${PROJECT_NAME}
 # Include Directory
 ###########################
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/hello_world/include
+    ${CMAKE_SOURCE_DIR}/olfactory_device/include
 
     third_party/googletest-release-1.12.1/googletest/include
 )
@@ -47,7 +47,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 # Link Libraries
 ###########################
 add_dependencies(${PROJECT_NAME}
-    hello_world
+    olfactory_device
     gmock
     gmock_main
     gtest
@@ -55,7 +55,7 @@ add_dependencies(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    hello_world
+    olfactory_device
     gmock
     gmock_main
     gtest
@@ -66,5 +66,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 # Custom command
 ###########################
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/build/hello_world/$(Configuration)/hello_world.dll ${CMAKE_SOURCE_DIR}/build/${PROJECT_NAME}/$(Configuration)/hello_world.dll
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/build/olfactory_device/$(Configuration)/olfactory_device.dll ${CMAKE_SOURCE_DIR}/build/${PROJECT_NAME}/$(Configuration)/olfactory_device.dll
 )

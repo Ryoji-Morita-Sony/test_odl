@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 3.14)
 ###########################
 # Project Settings
 ###########################
-set(PROJECT_NAME hello_world_wrapper)
+set(PROJECT_NAME olfactory_device_wrapper)
 
 include(GNUInstallDirs)
 
@@ -34,7 +34,7 @@ add_library(${PROJECT_NAME} STATIC
 ###########################
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/hello_world/include
+    ${CMAKE_SOURCE_DIR}/olfactory_device/include
 )
 
 ###########################
@@ -55,13 +55,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     # for static link
     # Output header and lib to install folder
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/install/hello_world_wrapper_lib/$(Configuration)/hello_world/include
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/hello_world/include ${CMAKE_SOURCE_DIR}/install/hello_world_wrapper_lib/$(Configuration)/hello_world/include
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/$(Configuration)/${PROJECT_NAME}.lib ${CMAKE_SOURCE_DIR}/install/hello_world_wrapper_lib/$(Configuration)/hello_world/lib/${PROJECT_NAME}.lib
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/install/olfactory_device_wrapper_lib/$(Configuration)/olfactory_device/include
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/olfactory_device/include ${CMAKE_SOURCE_DIR}/install/olfactory_device_wrapper_lib/$(Configuration)/olfactory_device/include
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/$(Configuration)/${PROJECT_NAME}.lib ${CMAKE_SOURCE_DIR}/install/olfactory_device_wrapper_lib/$(Configuration)/olfactory_device/lib/${PROJECT_NAME}.lib
 
     # for placing the wrapper directly
     # Output header and source to install folder
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/install/hello_world_wrapper_src/$(Configuration)/hello_world/include
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/hello_world/include ${CMAKE_SOURCE_DIR}/install/hello_world_wrapper_src/$(Configuration)/hello_world/include
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/install/hello_world_wrapper_src/$(Configuration)/hello_world/src
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/install/olfactory_device_wrapper_src/$(Configuration)/olfactory_device/include
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/olfactory_device/include ${CMAKE_SOURCE_DIR}/install/olfactory_device_wrapper_src/$(Configuration)/olfactory_device/include
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/install/olfactory_device_wrapper_src/$(Configuration)/olfactory_device/src
 )

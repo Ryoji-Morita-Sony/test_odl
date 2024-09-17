@@ -13,9 +13,9 @@ set(CMAKE_CXX_EXTENSIONS OFF) # Don't use compiler extensions such as gnu++11
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Project name
-project ("TrainingHelloWorldProject")
+project ("OlfactoryDeviceLibrary")
 
-add_subdirectory(hello_world)
-add_subdirectory(hello_world_wrapper)
+add_subdirectory(olfactory_device)
+add_subdirectory(olfactory_device_wrapper)
 add_subdirectory(unit_test)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT unit_test)
