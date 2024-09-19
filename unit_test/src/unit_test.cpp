@@ -26,12 +26,12 @@ class TestOlfactoryDevice : public ::testing::Test {
 };
 
 TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
-  OdResult result = StartScentEmission(1, "Lavender", 75);  // デバイスID 1で、匂い "Lavender"、強度75で開始
+  OdResult result = sony_odStartScentEmission(1, "Lavender", 75);  // デバイスID 1で、匂い "Lavender"、強度75で開始
   ASSERT_EQ(result, OdResult::SUCCESS);
 }
 
 TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
-  OdResult result = StopScentEmission();  // 放出停止
+  OdResult result = sony_odStopScentEmission();  // 放出停止
   ASSERT_EQ(result, OdResult::SUCCESS);
 }
 

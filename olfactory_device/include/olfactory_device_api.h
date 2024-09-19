@@ -10,6 +10,23 @@
 
 #include "olfactory_device_api_defs.h"
 
+
+/**
+ * @def OLFACTORY_DEVICE_API
+ * DLLライブラリのエクスポート/インポートキーワードを定義する。
+ */
+#ifndef OLFACTORY_DEVICE_API
+#ifdef _WIN64
+#ifdef BUILD_DLL
+#define OLFACTORY_DEVICE_API extern "C" __declspec(dllexport)
+#else
+#define OLFACTORY_DEVICE_API extern "C" __declspec(dllimport)
+#endif
+#else
+#define OLFACTORY_DEVICE_API
+#endif
+#endif
+
 namespace sony::olfactory_device {
 
 /**
@@ -19,13 +36,13 @@ namespace sony::olfactory_device {
  * @param[in] intensity 匂いの強度（例: 0〜100）
  * @return OdResult
  */
-OLFACTORY_DEVICE_API OdResult StartScentEmission(int device_id, const char* scent_name, int intensity);
+OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(int device_id, const char* scent_name, int intensity);
 
 
 /**
  * @brief 芳香の放出を停止する
  * @return OdResult
  */
-OLFACTORY_DEVICE_API OdResult StopScentEmission();
+OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission();
 
 }  // namespace sony::olfactory_device

@@ -41,7 +41,7 @@ DLL_FUNC_DEFINE(sony_odStopScentEmission)
 /** Get the installation path from a registry key */
 std::wstring GetInstallPath() {
   HKEY hkey = HKEY_LOCAL_MACHINE;
-  const std::wstring sub_key = std::wstring(L"SOFTWARE\\Sony Corporation\\OlfactoryDevice");
+  const std::wstring sub_key = std::wstring(L"SOFTWARE\\Sony Corporation\\Olfactory");
   const std::wstring value = L"Path";
 
   DWORD data_size{};

@@ -12,22 +12,6 @@
 
 #include <cmath>
 
-/**
- * @def OLFACTORY_DEVICE_API
- * DLLライブラリのエクスポート/インポートキーワードを定義する。
- */
-#ifndef OLFACTORY_DEVICE_API
-#ifdef _WIN64
-#ifdef BUILD_DLL
-#define OLFACTORY_DEVICE_API extern "C" __declspec(dllexport)
-#else
-#define OLFACTORY_DEVICE_API extern "C" __declspec(dllimport)
-#endif
-#else
-#define OLFACTORY_DEVICE_API
-#endif
-#endif
-
 #pragma region ENUM_DEFINITION
 /** APIの結果 */
 enum class OdResult : int32_t {

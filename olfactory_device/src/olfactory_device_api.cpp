@@ -12,14 +12,15 @@
 
 namespace sony::olfactory_device {
 
-OLFACTORY_DEVICE_API OdResult StartScentEmission(int device_id, const char* scent_name, int intensity) {
+OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(int device_id, const char* scent_name,
+                                                        int intensity) {
   // ÀÛ‚Ì“õ‚¢‚Ì•úoˆ—‚ğÀ‘•
   printf("Scent emission started for device %d with scent \"%s\" and intensity: %d.\n", device_id, scent_name,
          intensity);
   return OdResult::SUCCESS;
 }
 
-OLFACTORY_DEVICE_API OdResult StopScentEmission() {
+OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission() {
   // ÀÛ‚Ì–F‚Ì•úo’â~ˆ—‚ğÀ‘•
   printf("Scent emission stopped.\n");
   return OdResult::SUCCESS;
