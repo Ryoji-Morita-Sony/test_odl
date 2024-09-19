@@ -7,7 +7,7 @@
 // Proprietary and confidential.
 
 #include "gtest/gtest.h"
-#include "olfactory_device_api.h"
+#include "olfactory_device.h"
 using namespace sony::olfactory_device;
 
 #include <stdio.h>

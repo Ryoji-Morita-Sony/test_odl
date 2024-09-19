@@ -6,7 +6,7 @@
 // Unauthorized copying of this file, via any medium is strictly prohibited.
 // Proprietary and confidential.
 
-#include "olfactory_device_wrapper.h"
+#include "olfactory_device_api.h"
 
 #include <string>
 

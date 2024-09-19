@@ -19,6 +19,9 @@ enum class OdResult : int32_t {
   ERROR_LIBRARY_NOT_FOUND = -1,    /**< ライブラリがインストールされていない */
   ERROR_FUNCTION_UNSUPPORTED = -2, /**< 非サポートのAPI呼び出しによる失敗 */
   ERROR_UNKNOWN = -3,              /**< 不明なエラー */
+
+  ERROR_SEND_DEVICE_COMMAND_FAILED,
+
   MAX = INT32_MAX
 };
 #pragma endregion ENUM_DEFINITION

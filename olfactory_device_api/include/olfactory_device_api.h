@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "olfactory_device_api_defs.h"
+#include "olfactory_device_defs.h"
 
 namespace sony::olfactory_device {
 
