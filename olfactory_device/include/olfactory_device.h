@@ -1,15 +1,26 @@
-﻿// Copyright (c) 2024 Sony Corporation
-//
-// This source code is unlicensed and all use is prohibited without the express permission of the copyright
-// holder.
-//
-// Unauthorized copying of this file, via any medium is strictly prohibited.
-// Proprietary and confidential.
+﻿/**
+ * Sony CONFIDENTIAL
+ *
+ * Copyright 2024 Sony Group Corporation
+ *
+ * DO NOT COPY AND/OR REDISTRIBUTE WITHOUT PERMISSION.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 #pragma once
 
 #include "olfactory_device_defs.h"
-
 
 /**
  * @def OLFACTORY_DEVICE_API
@@ -37,7 +48,6 @@ namespace sony::olfactory_device {
  * @return OdResult
  */
 OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(int device_id, const char* scent_name, int intensity);
-
 
 /**
  * @brief 芳香の放出を停止する
