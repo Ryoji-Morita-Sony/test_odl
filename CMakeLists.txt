@@ -16,6 +16,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 project ("OlfactoryDeviceLibrary")
 
 add_subdirectory(olfactory_device)
-add_subdirectory(olfactory_device_wrapper)
+add_subdirectory(olfactory_device_api)
 add_subdirectory(unit_test)
+add_subdirectory(uart_receiver)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT unit_test)

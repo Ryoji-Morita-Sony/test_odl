@@ -17,3 +17,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#pragma once
+
+#include <windows.h>
+
+namespace sony::olfactory_device {
+
+class UARTInitializer {
+ public:
+  UARTInitializer();
+
+  bool SendUARTCommand(const char* command);
+
+ private:
+  HANDLE hSerial;
+};
+
+}  // namespace sony::olfactory_device
