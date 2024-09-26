@@ -37,14 +37,59 @@ class TestOlfactoryDevice : public ::testing::Test {
   virtual void TearDown() {}
 };
 
+// Test case to start scent emission with float level
 TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
-  OdResult result =
-      sony_odStartScentEmission(1, "Lavender", 75);  // デバイスID 1で、匂い "Lavender"、強度75で開始
+  // First, start a session for device "COM3"
+  OdResult result = sony_odStartSession("COM3");
+  ASSERT_EQ(result, OdResult::SUCCESS);
+
+  // Then, start scent emission for device "COM3", with scent "Lavender" and level 0.75
+  result = sony_odStartScentEmission("COM3", "Lavender", 0.75f);
+  ASSERT_EQ(result, OdResult::SUCCESS);
+
+  // End the session for device "COM3"
+  result = sony_odEndSession("COM3");
   ASSERT_EQ(result, OdResult::SUCCESS);
 }
 
+// Test case to stop scent emission
 TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
-  OdResult result = sony_odStopScentEmission();  // 放出停止
+  // First, start a session for device "COM3"
+  OdResult result = sony_odStartSession("COM3");
+  ASSERT_EQ(result, OdResult::SUCCESS);
+
+  // Start scent emission for device "COM3"
+  result = sony_odStartScentEmission("COM3", "Lavender", 0.75f);
+  ASSERT_EQ(result, OdResult::SUCCESS);
+
+  // Stop the scent emission for device "COM3"
+  result = sony_odStopScentEmission("COM3");
+  ASSERT_EQ(result, OdResult::SUCCESS);
+
+  // End the session for device "COM3"
+  result = sony_odEndSession("COM3");
+  ASSERT_EQ(result, OdResult::SUCCESS);
+}
+
+// Test case to handle the case where no session is active when stopping scent emission
+TEST_F(TestOlfactoryDevice, 03_stop_scent_emission_without_session) {
+  // Attempt to stop scent emission without starting a session
+  OdResult result = sony_odStopScentEmission("COM3");
+  ASSERT_EQ(result, OdResult::ERROR_UNKNOWN);
+}
+
+// Test case to set the scent orientation
+TEST_F(TestOlfactoryDevice, 04_set_scent_orientation) {
+  // First, start a session for device "COM3"
+  OdResult result = sony_odStartSession("COM3");
+  ASSERT_EQ(result, OdResult::SUCCESS);
+
+  // Set the scent orientation with yaw 45.0 and pitch 30.0
+  result = sony_odSetScentOrientation("COM3", 45.0f, 30.0f);
+  ASSERT_EQ(result, OdResult::SUCCESS);
+
+  // End the session for device "COM3"
+  result = sony_odEndSession("COM3");
   ASSERT_EQ(result, OdResult::SUCCESS);
 }
 

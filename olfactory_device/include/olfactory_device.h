@@ -41,18 +41,44 @@
 namespace sony::olfactory_device {
 
 /**
- * @brief 匂いの放出を開始する
- * @param[in] device_id デバイスのID
- * @param[in] scent_name 匂いの名称
- * @param[in] intensity 匂いの強度（例: 0〜100）
- * @return OdResult
+ * @brief Start a session for the specified device
+ * @param[in] device_id The UART port number (e.g., "COM3") representing the device
+ * @return OdResult Returns SUCCESS if the session starts successfully, otherwise ERROR_UNKNOWN
  */
-OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(int device_id, const char* scent_name, int intensity);
+OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id);
 
 /**
- * @brief 芳香の放出を停止する
- * @return OdResult
+ * @brief End the session for the specified device
+ * @param[in] device_id The UART port number (e.g., "COM3") representing the device
+ * @return OdResult Returns SUCCESS if the session ends successfully, otherwise ERROR_UNKNOWN
  */
-OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission();
+OLFACTORY_DEVICE_API OdResult sony_odEndSession(const char* device_id);
+
+
+/**
+ * @brief Set the orientation of the scent emission for the specified device
+ * @param[in] device_id The UART port number (e.g., "COM3") representing the device
+ * @param[in] yaw The yaw angle of the scent emission in degrees
+ * @param[in] pitch The pitch angle of the scent emission in degrees
+ * @return OdResult Returns SUCCESS if the orientation is set successfully, otherwise ERROR_UNKNOWN
+ */
+OLFACTORY_DEVICE_API OdResult sony_odSetScentOrientation(const char* device_id, float yaw, float pitch);
+
+/**
+ * @brief Start scent emission for the specified device
+ * @param[in] device_id The UART port number (e.g., "COM3") representing the device
+ * @param[in] scent_name The name of the scent to emit
+ * @param[in] level The intensity level of the scent (e.g., 0.0 to 1.0)
+ * @return OdResult Returns SUCCESS if the scent emission starts successfully, otherwise ERROR_UNKNOWN
+ */
+OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, const char* scent_name,
+                                                        float level);
+
+/**
+ * @brief Stop scent emission for the specified device
+ * @param[in] device_id The UART port number (e.g., "COM3") representing the device
+ * @return OdResult Returns SUCCESS if the scent emission stops successfully, otherwise ERROR_UNKNOWN
+ */
+OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id);
 
 }  // namespace sony::olfactory_device

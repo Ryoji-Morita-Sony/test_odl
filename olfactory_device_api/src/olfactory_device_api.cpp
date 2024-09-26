@@ -47,8 +47,11 @@ bool IsRuntimeLibraryValid() { return handle != nullptr; }
   using name##_t = OdResult (*)(__VA_ARGS__); \
   name##_t name = nullptr;
 
-DLL_FUNC_DEFINE(sony_odStartScentEmission, int, const char*, int)
-DLL_FUNC_DEFINE(sony_odStopScentEmission)
+DLL_FUNC_DEFINE(sony_odStartSession, const char*)
+DLL_FUNC_DEFINE(sony_odEndSession, const char*)
+DLL_FUNC_DEFINE(sony_odSetScentOrientation, const char*, float, float)
+DLL_FUNC_DEFINE(sony_odStartScentEmission, const char*, const char*, float)
+DLL_FUNC_DEFINE(sony_odStopScentEmission, const char*)
 
 /** Get the installation path from a registry key */
 std::wstring GetInstallPath() {
@@ -108,6 +111,9 @@ OdResult LoadRuntimeLibrary() {
 
 #pragma warning(push)
 #pragma warning(disable : 4191)
+  GET_FUNCTION(sony_odStartSession);
+  GET_FUNCTION(sony_odEndSession);
+  GET_FUNCTION(sony_odSetScentOrientation);
   GET_FUNCTION(sony_odStartScentEmission);
   GET_FUNCTION(sony_odStopScentEmission);
 #pragma warning(pop)
@@ -122,7 +128,31 @@ void UnloadRuntimeLibrary() {
   handle = nullptr;
 }
 
-OdResult StartScentEmission(int device_id, const char* scent_name, int intensity) {
+OdResult StartSession(const char* device_id) {
+  if (!IsRuntimeLibraryValid()) {
+    return OdResult::ERROR_LIBRARY_NOT_FOUND;
+  }
+
+  if (sony_odStartSession == nullptr) {
+    return OdResult::ERROR_FUNCTION_UNSUPPORTED;
+  }
+
+  return sony_odStartSession(device_id);
+}
+
+OdResult EndSession(const char* device_id) {
+  if (!IsRuntimeLibraryValid()) {
+    return OdResult::ERROR_LIBRARY_NOT_FOUND;
+  }
+
+  if (sony_odEndSession == nullptr) {
+    return OdResult::ERROR_FUNCTION_UNSUPPORTED;
+  }
+
+  return sony_odEndSession(device_id);
+}
+
+OdResult StartScentEmission(const char* device_id, const char* scent_name, float level) {
   if (!IsRuntimeLibraryValid()) {
     return OdResult::ERROR_LIBRARY_NOT_FOUND;
   }
@@ -131,10 +161,10 @@ OdResult StartScentEmission(int device_id, const char* scent_name, int intensity
     return OdResult::ERROR_FUNCTION_UNSUPPORTED;
   }
 
-  return sony_odStartScentEmission(device_id, scent_name, intensity);
+  return sony_odStartScentEmission(device_id, scent_name, level);
 }
 
-OdResult StopScentEmission() {
+OdResult StopScentEmission(const char* device_id) {
   if (!IsRuntimeLibraryValid()) {
     return OdResult::ERROR_LIBRARY_NOT_FOUND;
   }
@@ -143,7 +173,19 @@ OdResult StopScentEmission() {
     return OdResult::ERROR_FUNCTION_UNSUPPORTED;
   }
 
-  return sony_odStopScentEmission();
+  return sony_odStopScentEmission(device_id);
+}
+
+OdResult SetScentOrientation(const char* device_id, float yaw, float pitch) {
+  if (!IsRuntimeLibraryValid()) {
+    return OdResult::ERROR_LIBRARY_NOT_FOUND;
+  }
+
+  if (sony_odSetScentOrientation == nullptr) {
+    return OdResult::ERROR_FUNCTION_UNSUPPORTED;
+  }
+
+  return sony_odSetScentOrientation(device_id, yaw, pitch);
 }
 
 }  // namespace sony::olfactory_device
