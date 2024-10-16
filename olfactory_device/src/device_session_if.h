@@ -66,6 +66,46 @@ class DeviceSessionIF {
   virtual bool SendData(const std::string& data) = 0;
 
   // Add any other necessary interface methods here
+  virtual bool SendData(unsigned int data) = 0;
+
+  /**
+   * @brief Receives data from the connected device.
+   *
+   * This function receives the specified data from the device over the active connection.
+   * The device must be connected before calling this function.
+   *
+   * @param data A reference to the string containing the data to receive.
+   * @return Returns true if the data was successfully sent, false otherwise.
+   */
+  virtual bool RecvData(std::string& data) = 0;
+
+ private:
+  /**
+   * @brief Thread function.
+   */
+  virtual void ThreadFunction() = 0;
+
+ public:
+  /**
+   * @brief Start a thread.
+   *
+   * @param wait milliseconds waiting in thread loop.
+   */
+  virtual void StartThread(long long wait) = 0;
+
+  /**
+   * @brief Stop a thread.
+   */
+  virtual void StopThread() = 0;
+
+  /**
+   * @brief Set a data.
+   *
+   * @param data A data to set in thread loop.
+   */
+  virtual void SetData(const std::string& data) = 0;
+  virtual void SetData(unsigned int data) = 0;
+
 };
 
 }  // namespace sony::olfactory_device

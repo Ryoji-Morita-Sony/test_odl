@@ -66,6 +66,45 @@ class StubSession : public DeviceSessionIF {
    * @return Always returns true to simulate successful data transmission.
    */
   bool SendData(const std::string& data) override;
+
+  // Add any other necessary interface methods here
+  bool SendData(unsigned int data) override;
+
+  /**
+   * @brief Simulates received data over the session.
+   *
+   * @param data The data that would be received over the session.
+   * @return Always returns true to simulate successful data transmission.
+   */
+  bool RecvData(std::string& data) override;
+
+ private:
+  /**
+   * @brief Thread function.
+   */
+  void ThreadFunction() override;
+
+ public:
+  /**
+   * @brief Start a thread.
+   *
+   * @param wait milliseconds waiting in thread loop.
+   */
+  void StartThread(long long wait) override;
+
+  /**
+   * @brief Stop a thread.
+   */
+  void StopThread() override;
+
+  /**
+   * @brief Set a data.
+   *
+   * @param data A data to set in thread loop.
+   */
+  void SetData(const std::string& data) override;
+  void SetData(unsigned int data) override;
+
 };
 
 }  // namespace sony::olfactory_device

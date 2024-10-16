@@ -79,4 +79,52 @@ bool StubSession::SendData(const std::string& data) {
   return true;  // Simulate successful data transmission
 }
 
+bool StubSession::SendData(unsigned int data) {
+  if (!connected_) {
+    std::cerr << "[StubSession] Error: Cannot send data, not connected to any device." << std::endl;
+    return false;
+  }
+
+  // Log the data being sent and simulate the sending operation
+  std::cout << "[StubSession] SendData called with data: " << data << std::endl;
+  std::cout << "[StubSession] If this were a real session, we would send the data over the UART connection."
+            << std::endl;
+
+  return true;  // Simulate successful data transmission
+}
+
+bool StubSession::RecvData(std::string& data) {
+  if (!connected_) {
+    std::cerr << "[StubSession] Error: Cannot receive data, not connected to any device." << std::endl;
+    return false;
+  }
+
+  // Log the data being sent and simulate the sending operation
+  std::cout << "[StubSession] RecvData called with data: " << data << std::endl;
+  std::cout << "[StubSession] If this were a real session, we would receive the data over the UART connection."
+            << std::endl;
+
+  return true;  // Simulate successful data transmission
+}
+
+void StubSession::ThreadFunction() {
+  std::cout << "[StubSession] ThreadFunction called." << std::endl;
+}
+
+void StubSession::StartThread(long long wait) {
+  std::cout << "[StubSession] StartThread called with wait: " << wait << std::endl;
+}
+
+void StubSession::StopThread() {
+  std::cout << "[StubSession] StopThread called." << std::endl;
+}
+
+void StubSession::SetData(const std::string& data) {
+  std::cout << "[StubSession] SetData called with data: " << data << std::endl;
+}
+
+void StubSession::SetData(unsigned int data) {
+  std::cout << "[StubSession] SetData called with data: " << data << std::endl;
+}
+
 }  // namespace sony::olfactory_device

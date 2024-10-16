@@ -25,11 +25,15 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <iomanip> // for std::setw, std::setfill
 
 namespace sony::olfactory_device {
 
 // Uncomment to use the StubSession for testing
 //#define USE_STUB_SESSION
+
+// Uncomment to use the thread
+#define USE_THREAD
 
 #ifdef USE_STUB_SESSION
 using SessionType = StubSession;
@@ -59,6 +63,10 @@ OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
+#ifdef USE_THREAD
+  device_sessions[device]->StartThread(20);
+#endif
+
   return OdResult::SUCCESS;
 }
 
@@ -70,6 +78,10 @@ OLFACTORY_DEVICE_API OdResult sony_odEndSession(const char* device_id) {
     std::cerr << "No active session on port: " << device_id << "\n";
     return OdResult::ERROR_UNKNOWN;
   }
+
+#ifdef USE_THREAD
+  device_sessions[device]->StopThread();
+#endif
 
   // Close the session and remove it from the map
   device_sessions[device]->Close();
@@ -88,11 +100,26 @@ OLFACTORY_DEVICE_API OdResult sony_odSetScentOrientation(const char* device_id, 
   }
 
   // Send the command to set scent orientation
-  std::string command = "SET_ORIENTATION " + std::to_string(yaw) + " " + std::to_string(pitch) + "\n";
+  short int n_yaw = static_cast<short int>(yaw);
+  short int n_pitch = static_cast<short int>(pitch);
+  if (n_yaw < -90 || 90 < n_yaw) {
+    return OdResult::ERROR_SEND_DEVICE_COMMAND_FAILED;
+  }
+
+  if (n_pitch > 360) {
+    n_pitch = n_pitch % 360;
+  }
+
+  unsigned int command = (n_yaw & 0x0000FFFF) << 16 | (n_pitch & 0x0000FFFF);
+
+#ifdef USE_THREAD
+  device_sessions[device]->SetData(command);
+#else
   if (!device_sessions[device]->SendData(command)) {
     std::cerr << "Failed to send set orientation command on port: " << device_id << "\n";
     return OdResult::ERROR_UNKNOWN;
   }
+#endif
 
   return OdResult::SUCCESS;
 }
@@ -108,11 +135,28 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
   }
 
   // Send the command to start scent emission
-  std::string command = "START_SCENT " + std::string(scent_name) + " " + std::to_string(level) + "\n";
+  int n_level = static_cast<int>(level * 10);
+  std::string command = "release(";
+  command.append(scent_name);
+  command.append(", ");
+  command.append(std::to_string(n_level));
+  command.append(")");
+
+#ifdef USE_THREAD
+  device_sessions[device]->SetData(command);
+#else
   if (!device_sessions[device]->SendData(command)) {
     std::cerr << "Failed to send scent emission command on port: " << device_id << "\n";
     return OdResult::ERROR_UNKNOWN;
   }
+
+  // Receive the result
+  std::string result = "";
+  if (!device_sessions[device]->RecvData(result)) {
+    std::cerr << "Failed to receive scent emission result on port: " << device_id << "\n";
+    return OdResult::ERROR_UNKNOWN;
+  }
+#endif
 
   return OdResult::SUCCESS;
 }
@@ -127,7 +171,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
   }
 
   // Send the command to stop scent emission
-  std::string command = "STOP_SCENT\n";
+  std::string command = "fan(1, 0)";
   if (!device_sessions[device]->SendData(command)) {
     std::cerr << "Failed to send stop scent emission command on port: " << device_id << "\n";
     return OdResult::ERROR_UNKNOWN;

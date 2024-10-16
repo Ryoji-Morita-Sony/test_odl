@@ -22,6 +22,8 @@
 #include "device_session_if.h"
 #include <string>
 #include <windows.h>
+#include <thread>
+#include <atomic>
 
 namespace sony::olfactory_device {
 
@@ -35,6 +37,14 @@ class UartSession : public DeviceSessionIF {
  private:
   HANDLE uart_handle_;  // Handle to the UART connection
   bool connected_;      // Connection status
+
+  std::atomic<bool> t_flag_;      // Flag for thread loop.
+  long long         t_wait_;      // wait time of thread loop, milliseconds.
+  std::thread       thread_;      // Thread parameter.
+  std::atomic<bool> s_dataFlag_;  // Flag if data(string type) is sent in thread loop.
+  std::string       s_data_;      // Data(string type) to send in thread loop.
+  std::atomic<bool> ui_dataFlag_; // Flag if data(ui) is sent in thread loop.
+  unsigned int      ui_data_;     // Data(ui) to send in thread loop.
 
  public:
   UartSession();
@@ -67,6 +77,45 @@ class UartSession : public DeviceSessionIF {
    * @return Returns true if the data was successfully sent, false otherwise.
    */
   bool SendData(const std::string& data) override;
+
+  // Add any other necessary interface methods here
+  bool SendData(unsigned int data) override;
+
+  /**
+   * @brief Received data over the UART connection.
+   *
+   * @param data The data to receive over the UART.
+   * @return Returns true if the data was successfully sent, false otherwise.
+   */
+  bool RecvData(std::string& data) override;
+
+ private:
+  /**
+   * @brief Thread function.
+   */
+  void ThreadFunction() override;
+
+ public:
+  /**
+   * @brief Start a thread.
+   *
+   * @param wait milliseconds waiting in thread loop.
+   */
+  void StartThread(long long wait) override;
+
+/**
+   * @brief Stop a thread.
+   */
+  void StopThread() override;
+
+/**
+   * @brief Set a data.
+   *
+   * @param data A data to set in thread loop.
+   */
+  void SetData(const std::string& data) override;
+  void SetData(unsigned int data) override;
+
 };
 
 }  // namespace sony::olfactory_device

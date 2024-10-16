@@ -21,6 +21,7 @@
 #include "uart_session.h"
 
 #include <iostream>
+#include <iomanip> // for std::setw, std::setfill
 
 namespace sony::olfactory_device {
 
@@ -42,6 +43,7 @@ bool UartSession::Open(const char* device_id) {
   std::wstring wide_port_num = std::wstring(port_num, port_num + strlen(port_num));
 
   // Open the serial port
+  std::cout << "device_id: " << device_id << std::endl;
   uart_handle_ = CreateFileW(wide_port_num.c_str(), GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING,
                              FILE_ATTRIBUTE_NORMAL, 0);
 
@@ -62,7 +64,11 @@ bool UartSession::Open(const char* device_id) {
   }
 
   // Set serial communication parameters
-  dcb_serial_params.BaudRate = CBR_9600;    // Fixed baud rate to 9600
+  if (0 == strcmp(device_id, "COM4")) {       // COM4: for Kimura-san's moving-light
+    dcb_serial_params.BaudRate = CBR_9600;    // Fixed baud rate to 9600
+  } else {
+    dcb_serial_params.BaudRate = CBR_115200;  // Fixed baud rate to 115200
+  }
   dcb_serial_params.ByteSize = 8;           // Data size = 8 bits
   dcb_serial_params.StopBits = ONESTOPBIT;  // One stop bit
   dcb_serial_params.Parity = NOPARITY;      // No parity
@@ -74,7 +80,21 @@ bool UartSession::Open(const char* device_id) {
     return false;
   }
 
-  std::cout << "UART initialized successfully for port: " << port_num << " with baud rate: 9600" << std::endl;
+  // Set timeout paramters
+  COMMTIMEOUTS timeouts = { 0 };
+  timeouts.ReadIntervalTimeout = 0; // milliseconds
+  timeouts.ReadTotalTimeoutConstant = 10;
+  timeouts.ReadTotalTimeoutMultiplier = 1;
+
+  if (!SetCommTimeouts(uart_handle_, &timeouts)) {
+    std::cerr << "Error setting serial port state for: " << port_num << std::endl;
+    CloseHandle(uart_handle_);
+    uart_handle_ = INVALID_HANDLE_VALUE;
+    return false;
+  }
+
+  std::cout << "UART initialized successfully for port: " << port_num
+            << " with baud rate: " << dcb_serial_params.BaudRate << std::endl;
   connected_ = true;
   return true;
 }
@@ -108,5 +128,123 @@ bool UartSession::SendData(const std::string& data) {
     std::cout << "Data sent: " << data << std::endl;
     return true;
 }
+
+bool UartSession::SendData(unsigned int data) {
+    if (!connected_) {
+        std::cerr << "UART not connected." << std::endl;
+        return false;
+    }
+
+    // Write data to UART (platform-dependent)
+    DWORD bytes_written;
+    unsigned char byte = 0x00;
+
+    byte = (data & 0xFF000000) >> 24;
+    if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
+        std::cerr << "Failed to send data over UART." << std::endl;
+        return false;
+    }
+
+    byte = (data & 0x00FF0000) >> 16;
+    if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
+      std::cerr << "Failed to send data over UART." << std::endl;
+      return false;
+    }
+
+    byte = (data & 0x0000FF00) >> 8;
+    if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
+      std::cerr << "Failed to send data over UART." << std::endl;
+      return false;
+    }
+
+    byte = (data & 0x000000FF) >> 0;
+    if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
+      std::cerr << "Failed to send data over UART." << std::endl;
+      return false;
+    }
+
+    std::cout << "Data sent: " << std::hex << std::setw(8) << std::setfill('0') << data << std::endl;
+    return true;
+}
+
+bool UartSession::RecvData(std::string& data) {
+  if (!connected_) {
+    std::cerr << "UART not connected." << std::endl;
+    return false;
+  }
+
+  // Read data from UART (platform-dependent)
+  char buffer[1024] = { 0 };
+  DWORD bytes_read = 0;
+  while (true) {
+    if (ReadFile(uart_handle_, buffer, sizeof(buffer) - 1, &bytes_read, nullptr)) {
+      if (bytes_read > 0) {
+        buffer[bytes_read] = '\0';
+//      std::cout << "bytes_read: " << bytes_read << std::endl;
+        data = buffer;
+        std::cout << "Data recv: " << data << std::endl;
+        return true;
+      }
+    } else {
+      std::cerr << "Failed to receive data over UART." << std::endl;
+      return false;
+    }
+  }
+}
+
+void UartSession::ThreadFunction() {
+  std::string result = "";
+
+  while (t_flag_) {
+    if (s_dataFlag_ == true) {
+      if (!this->SendData(s_data_)) {
+        std::cerr << "Failed to send command on port: " << "\n";
+      }
+      s_dataFlag_ = false;
+      if (!this->RecvData(result)) {
+        std::cerr << "Failed to receive result on port: " << "\n";
+      }
+    }
+
+    if (ui_dataFlag_ == true) {
+      if (!this->SendData(ui_data_)) {
+        std::cerr << "Failed to send command on port: " << "\n";
+      }
+      ui_dataFlag_ = false;
+      if (!this->RecvData(result)) {
+        std::cerr << "Failed to receive result on port: " << "\n";
+      }
+    }
+    
+    std::this_thread::sleep_for(std::chrono::milliseconds(t_wait_));
+  }
+  std::cout << "Thread ending..." << std::endl;
+}
+
+void UartSession::StartThread(long long wait) {
+  thread_ = std::thread(&UartSession::ThreadFunction, this);
+  t_wait_ = wait;
+  t_flag_ = true;
+  std::cout << "Thread has started wait: " << wait << std::endl;
+}
+
+void UartSession::StopThread() {
+  t_flag_ = false;
+  if (thread_.joinable()) {
+    thread_.join();
+  }
+  std::cout << "Thread has finished." << std::endl;
+}
+
+void UartSession::SetData(const std::string& data) {
+  s_dataFlag_ = true;
+  s_data_ = data;
+}
+
+void UartSession::SetData(unsigned int data) {
+  ui_dataFlag_ = true;
+  ui_data_ = data;
+}
+
 
 }  // namespace sony::olfactory_device
