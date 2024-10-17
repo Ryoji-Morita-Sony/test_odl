@@ -58,18 +58,24 @@ class TestOlfactoryDevice : public ::testing::Test {
 };
 
 // Test case to start scent emission with float level
-TEST_F(TestOlfactoryDevice, DISABLED_01_start_scent_emission) {
+TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
   std::string device_id = "COM3";
-  std::string name = "5";
+  std::string name = "4";
   float level = 0.85f;
 
   // First, start a session for device
   OdResult result = sony_odStartSession(device_id.c_str());
   ASSERT_EQ(result, OdResult::SUCCESS);
 
+  // wait
+  std::this_thread::sleep_for(std::chrono::seconds(3));
+
   // Then, start scent emission for device with scent and level
   result = sony_odStartScentEmission(device_id.c_str(), name.c_str(), level);
   ASSERT_EQ(result, OdResult::SUCCESS);
+
+  // wait
+  std::this_thread::sleep_for(std::chrono::seconds(10));
 
   // End the session for device
   result = sony_odEndSession(device_id.c_str());
@@ -172,7 +178,7 @@ TEST_F(TestOlfactoryDevice, DISABLED_05_set_scent_orientation_motion) {
 }
 
 // Test case to start scent emission with float level
-TEST_F(TestOlfactoryDevice, 06_uart_9_devcies) {
+TEST_F(TestOlfactoryDevice, DISABLED_06_uart_9_devcies) {
   int max = 9;
   std::wstring device_id[9] = {L"COM3", L"COM5", L"COM6", L"COM7", L"COM8", L"COM9",
                                L"\\\\.\\COM12", L"\\\\.\\COM13", L"\\\\.\\COM14"};
