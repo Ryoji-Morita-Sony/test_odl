@@ -24,6 +24,7 @@
 #include <windows.h>
 #include <thread>
 #include <atomic>
+#include <queue>
 
 namespace sony::olfactory_device {
 
@@ -38,13 +39,11 @@ class UartSession : public DeviceSessionIF {
   HANDLE uart_handle_;  // Handle to the UART connection
   bool connected_;      // Connection status
 
-  std::atomic<bool> t_flag_;      // Flag for thread loop.
-  long long         t_wait_;      // wait time of thread loop, milliseconds.
-  std::thread       thread_;      // Thread parameter.
-  std::atomic<bool> s_dataFlag_;  // Flag if data(string type) is sent in thread loop.
-  std::string       s_data_;      // Data(string type) to send in thread loop.
-  std::atomic<bool> ui_dataFlag_; // Flag if data(ui) is sent in thread loop.
-  unsigned int      ui_data_;     // Data(ui) to send in thread loop.
+  std::atomic<bool>        t_flag_;      // Flag for thread loop.
+  long long                t_wait_;      // wait time of thread loop, milliseconds.
+  std::thread              thread_;      // Thread parameter.
+  std::queue<std::string>  s_data_;      // Data(string type) to send in thread loop.
+  std::queue<unsigned int> ui_data_;     // Data(ui) to send in thread loop.
 
  public:
   UartSession();

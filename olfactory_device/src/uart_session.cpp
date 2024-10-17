@@ -195,22 +195,22 @@ bool UartSession::RecvData(std::string& data) {
 void UartSession::ThreadFunction() {
   std::string result = "";
 
-  while (t_flag_) {
-    if (s_dataFlag_ == true) {
-      if (!this->SendData(s_data_)) {
+  while (t_flag_ || !s_data_.empty() || !ui_data_.empty()) {
+    if (!s_data_.empty()) {
+      if (!this->SendData(s_data_.front())) {
         std::cerr << "Failed to send command on port: " << "\n";
       }
-      s_dataFlag_ = false;
+      s_data_.pop();
       if (!this->RecvData(result)) {
         std::cerr << "Failed to receive result on port: " << "\n";
       }
     }
 
-    if (ui_dataFlag_ == true) {
-      if (!this->SendData(ui_data_)) {
+    if (!ui_data_.empty()) {
+      if (!this->SendData(ui_data_.front())) {
         std::cerr << "Failed to send command on port: " << "\n";
       }
-      ui_dataFlag_ = false;
+      ui_data_.pop();
       if (!this->RecvData(result)) {
         std::cerr << "Failed to receive result on port: " << "\n";
       }
@@ -237,13 +237,11 @@ void UartSession::StopThread() {
 }
 
 void UartSession::SetData(const std::string& data) {
-  s_dataFlag_ = true;
-  s_data_ = data;
+  s_data_.push(data);
 }
 
 void UartSession::SetData(unsigned int data) {
-  ui_dataFlag_ = true;
-  ui_data_ = data;
+  ui_data_.push(data);
 }
 
 
