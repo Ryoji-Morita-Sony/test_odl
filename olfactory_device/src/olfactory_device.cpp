@@ -67,6 +67,24 @@ OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id) {
   device_sessions[device]->StartThread(20);
 #endif
 
+  // Send the command to start fan
+  std::string command = "fan(1, 30)";
+#ifdef USE_THREAD
+  device_sessions[device]->SetData(command);
+#else
+  if (!device_sessions[device]->SendData(command)) {
+    std::cerr << "Failed to send scent emission command on port: " << device_id << "\n";
+    return OdResult::ERROR_UNKNOWN;
+  }
+
+  // Receive the result
+  std::string result = "";
+  if (!device_sessions[device]->RecvData(result)) {
+    std::cerr << "Failed to receive scent emission result on port: " << device_id << "\n";
+    return OdResult::ERROR_UNKNOWN;
+  }
+#endif
+
   return OdResult::SUCCESS;
 }
 
@@ -78,6 +96,24 @@ OLFACTORY_DEVICE_API OdResult sony_odEndSession(const char* device_id) {
     std::cerr << "No active session on port: " << device_id << "\n";
     return OdResult::ERROR_UNKNOWN;
   }
+
+  // Send the command to start fan
+  std::string command = "fan(1, 0)";
+#ifdef USE_THREAD
+  device_sessions[device]->SetData(command);
+#else
+  if (!device_sessions[device]->SendData(command)) {
+    std::cerr << "Failed to send scent emission command on port: " << device_id << "\n";
+    return OdResult::ERROR_UNKNOWN;
+  }
+
+  // Receive the result
+  std::string result = "";
+  if (!device_sessions[device]->RecvData(result)) {
+    std::cerr << "Failed to receive scent emission result on port: " << device_id << "\n";
+    return OdResult::ERROR_UNKNOWN;
+  }
+#endif
 
 #ifdef USE_THREAD
   device_sessions[device]->StopThread();
@@ -167,13 +203,6 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
   // Check if a session is active for the given device_id
   if (device_sessions.find(device) == device_sessions.end() || !device_sessions[device]->IsConnected()) {
     std::cerr << "No active session on port: " << device_id << ". Start a session first.\n";
-    return OdResult::ERROR_UNKNOWN;
-  }
-
-  // Send the command to stop scent emission
-  std::string command = "fan(1, 0)";
-  if (!device_sessions[device]->SendData(command)) {
-    std::cerr << "Failed to send stop scent emission command on port: " << device_id << "\n";
     return OdResult::ERROR_UNKNOWN;
   }
 
