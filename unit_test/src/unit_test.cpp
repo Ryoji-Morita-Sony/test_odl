@@ -86,7 +86,7 @@ TEST_F(TestOlfactoryDevice, DISABLED_01_start_scent_emission) {
 TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
   std::string device_id = "COM3";
   std::string name = "6";
-  float level = 0.75f;
+  float level = 0.4f;
 
   // First, start a session for device
   OdResult result = sony_odStartSession(device_id.c_str());
@@ -95,10 +95,14 @@ TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
   // Start scent emission for device
   result = sony_odStartScentEmission(device_id.c_str(), name.c_str(), level);
   ASSERT_EQ(result, OdResult::SUCCESS);
+  std::this_thread::sleep_for(std::chrono::seconds(30));
+//Sleep(20000);   // milliseconds
 
   // Stop the scent emission for device
   result = sony_odStopScentEmission(device_id.c_str());
   ASSERT_EQ(result, OdResult::SUCCESS);
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+  // Sleep(20000);   // milliseconds
 
   // End the session for device
   result = sony_odEndSession(device_id.c_str());

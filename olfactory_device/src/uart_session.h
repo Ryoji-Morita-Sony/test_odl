@@ -39,11 +39,11 @@ class UartSession : public DeviceSessionIF {
   HANDLE uart_handle_;  // Handle to the UART connection
   bool connected_;      // Connection status
 
-  std::thread              t_;           // Thread parameter.
-  std::atomic<bool>        t_flag_;      // Flag for thread loop.
-  long long                t_wait_;      // wait time of thread loop, milliseconds.
-  std::queue<std::string>  t_sData_;     // Data(string type) to send in thread loop.
-  std::queue<unsigned int> t_uiData_;    // Data(ui) to send in thread loop.
+  std::thread       t_;       // Thread parameter.
+  std::atomic<bool> t_flag_;  // Flag for thread loop.
+  long long         t_wait_;  // Time waiting in thread loop, seconds.
+  std::string       t_scent_; // Scent command to send in thread loop.
+  std::string       t_fan_;   // Fan command to send in thread loop.
 
  public:
   UartSession();
@@ -92,28 +92,34 @@ class UartSession : public DeviceSessionIF {
   /**
    * @brief Thread function.
    */
-  void ThreadFunction() override;
+  void ThreadFunc() override;
 
  public:
   /**
    * @brief Start a thread.
-   *
-   * @param wait milliseconds waiting in thread loop.
    */
-  void StartThread(long long wait) override;
+  void StartThreadFunc() override;
 
-/**
+  /**
    * @brief Stop a thread.
    */
-  void StopThread() override;
+  void StopThreadFunc() override;
 
-/**
-   * @brief Set a data.
+  /**
+   * @brief Set a scent command like "release(4, 10)".
    *
-   * @param data A data to set in thread loop.
+   * @param cmd Scent command.
+   * @param wait Seconds waiting in thread loop.
    */
-  void SetData(const std::string& data) override;
-  void SetData(unsigned int data) override;
+  void SetScent(const std::string& cmd, long long wait) override;
+
+  /**
+   * @brief Set a fan command like "fan(1, 50)".
+   *
+   * @param cmd Fan command.
+   * @param wait Seconds waiting in thread loop.
+   */
+  void SetFan(const std::string& cmd, long long wait) override;
 
 };
 

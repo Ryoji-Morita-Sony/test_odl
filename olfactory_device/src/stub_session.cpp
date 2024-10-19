@@ -107,24 +107,24 @@ bool StubSession::RecvData(std::string& data) {
   return true;  // Simulate successful data transmission
 }
 
-void StubSession::ThreadFunction() {
-  std::cout << "[StubSession] ThreadFunction called." << std::endl;
+void StubSession::ThreadFunc() {
+  std::cout << "[StubSession] ThreadFunc called." << std::endl;
 }
 
-void StubSession::StartThread(long long wait) {
-  std::cout << "[StubSession] StartThread called with wait: " << wait << std::endl;
+void StubSession::StartThreadFunc() {
+  std::cout << "[StubSession] StartThreadFunc called." << std::endl;
 }
 
-void StubSession::StopThread() {
-  std::cout << "[StubSession] StopThread called." << std::endl;
+void StubSession::StopThreadFunc() {
+  std::cout << "[StubSession] StopThreadFunc called." << std::endl;
 }
 
-void StubSession::SetData(const std::string& data) {
-  std::cout << "[StubSession] SetData called with data: " << data << std::endl;
+void StubSession::SetScent(const std::string& cmd, long long wait) {
+  std::cout << "[StubSession] SetScent called with cmd: " << cmd << " wait: " << wait << std::endl;
 }
 
-void StubSession::SetData(unsigned int data) {
-  std::cout << "[StubSession] SetData called with data: " << data << std::endl;
+void StubSession::SetFan(const std::string& cmd, long long wait) {
+  std::cout << "[StubSession] SetFan called with cmd: " << cmd << " wait: " << wait << std::endl;
 }
 
 }  // namespace sony::olfactory_device

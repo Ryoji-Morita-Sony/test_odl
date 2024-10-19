@@ -23,10 +23,17 @@
 #include <iostream>
 #include <iomanip> // for std::setw, std::setfill
 
+#define THREAD_SCENT_WAIT (6)
+
 namespace sony::olfactory_device {
 
 // Constructor
-UartSession::UartSession() : uart_handle_(INVALID_HANDLE_VALUE), connected_(false) {}
+UartSession::UartSession()
+    : uart_handle_(INVALID_HANDLE_VALUE),
+      connected_(false),
+      t_flag_(false),
+      t_wait_(THREAD_SCENT_WAIT),
+      t_scent_("") {}
 
 // Destructor
 UartSession::~UartSession() {
@@ -120,7 +127,7 @@ bool UartSession::SendData(const std::string& data) {
 
     // Write data to UART (platform-dependent)
     DWORD bytes_written;
-    if (!WriteFile(uart_handle_, data.c_str(), data.size(), &bytes_written, nullptr)) {
+    if (!WriteFile(uart_handle_, data.c_str(), static_cast<DWORD>(data.size()), &bytes_written, nullptr)) {
         std::cerr << "Failed to send data over UART." << std::endl;
         return false;
     }
@@ -138,31 +145,16 @@ bool UartSession::SendData(unsigned int data) {
     // Write data to UART (platform-dependent)
     DWORD bytes_written;
     unsigned char byte = 0x00;
+    unsigned int  mask = 0xFF000000;
 
-    byte = (data & 0xFF000000) >> 24;
-    if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
+    for (int i = 24; i >= 0; i = i - 8) {
+      byte = (data & mask) >> i;
+      if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
         std::cerr << "Failed to send data over UART." << std::endl;
         return false;
+      }
+      mask = mask >> 8;
     }
-
-    byte = (data & 0x00FF0000) >> 16;
-    if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
-      std::cerr << "Failed to send data over UART." << std::endl;
-      return false;
-    }
-
-    byte = (data & 0x0000FF00) >> 8;
-    if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
-      std::cerr << "Failed to send data over UART." << std::endl;
-      return false;
-    }
-
-    byte = (data & 0x000000FF) >> 0;
-    if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
-      std::cerr << "Failed to send data over UART." << std::endl;
-      return false;
-    }
-
     std::cout << "Data sent: " << std::hex << std::setw(8) << std::setfill('0') << data << std::endl;
     return true;
 }
@@ -192,43 +184,41 @@ bool UartSession::RecvData(std::string& data) {
   }
 }
 
-void UartSession::ThreadFunction() {
+void UartSession::ThreadFunc() {
   std::string result = "";
 
-  while (t_flag_ || !t_sData_.empty() || !t_uiData_.empty()) {
-    if (!t_sData_.empty()) {
-      if (!this->SendData(t_sData_.front())) {
+  while (t_flag_) {
+    if (!t_scent_._Equal("")) {
+      if (!this->SendData(t_scent_)) {
         std::cerr << "Failed to send command on port: " << "\n";
       }
-      t_sData_.pop();
       if (!this->RecvData(result)) {
         std::cerr << "Failed to receive result on port: " << "\n";
       }
     }
 
-    if (!t_uiData_.empty()) {
-      if (!this->SendData(t_uiData_.front())) {
+    if (!t_fan_._Equal("")) {
+      if (!this->SendData(t_fan_)) {
         std::cerr << "Failed to send command on port: " << "\n";
       }
-      t_uiData_.pop();
       if (!this->RecvData(result)) {
         std::cerr << "Failed to receive result on port: " << "\n";
       }
+      t_fan_ = "";  // Set "" in a case of FAN.
     }
-    
-    std::this_thread::sleep_for(std::chrono::milliseconds(t_wait_));
+
+    std::this_thread::sleep_for(std::chrono::seconds(t_wait_));
   }
   std::cout << "Thread ending..." << std::endl;
 }
 
-void UartSession::StartThread(long long wait) {
-  t_ = std::thread(&UartSession::ThreadFunction, this);
-  t_wait_ = wait;
+void UartSession::StartThreadFunc() {
   t_flag_ = true;
-  std::cout << "Thread has started wait: " << wait << std::endl;
+  t_ = std::thread(&UartSession::ThreadFunc, this);
+  std::cout << "Thread has started." << std::endl;
 }
 
-void UartSession::StopThread() {
+void UartSession::StopThreadFunc() {
   t_flag_ = false;
   if (t_.joinable()) {
     t_.join();
@@ -236,13 +226,14 @@ void UartSession::StopThread() {
   std::cout << "Thread has finished." << std::endl;
 }
 
-void UartSession::SetData(const std::string& data) {
-  t_sData_.push(data);
+void UartSession::SetScent(const std::string& cmd, long long wait) {
+  t_scent_ = cmd;
+  t_wait_ = wait;
 }
 
-void UartSession::SetData(unsigned int data) {
-  t_uiData_.push(data);
+void UartSession::SetFan(const std::string& cmd, long long wait) {
+  t_fan_ = cmd;
+  t_wait_ = wait;
 }
-
 
 }  // namespace sony::olfactory_device

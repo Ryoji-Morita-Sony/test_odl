@@ -82,28 +82,34 @@ class StubSession : public DeviceSessionIF {
   /**
    * @brief Thread function.
    */
-  void ThreadFunction() override;
+  void ThreadFunc() override;
 
  public:
   /**
    * @brief Start a thread.
-   *
-   * @param wait milliseconds waiting in thread loop.
    */
-  void StartThread(long long wait) override;
+  void StartThreadFunc() override;
 
   /**
    * @brief Stop a thread.
    */
-  void StopThread() override;
+  void StopThreadFunc() override;
 
   /**
-   * @brief Set a data.
+   * @brief Set a scent command like "release(4, 10)".
    *
-   * @param data A data to set in thread loop.
+   * @param cmd Scent command.
+   * @param wait Seconds waiting in thread loop.
    */
-  void SetData(const std::string& data) override;
-  void SetData(unsigned int data) override;
+  void SetScent(const std::string& cmd, long long wait) override;
+
+  /**
+   * @brief Set a fan command like "fan(1, 50)".
+   *
+   * @param cmd Fan command.
+   * @param wait Seconds waiting in thread loop.
+   */
+  void SetFan(const std::string& cmd, long long wait) override;
 
 };
 
