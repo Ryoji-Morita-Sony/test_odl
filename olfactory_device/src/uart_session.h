@@ -39,11 +39,11 @@ class UartSession : public DeviceSessionIF {
   HANDLE uart_handle_;  // Handle to the UART connection
   bool connected_;      // Connection status
 
+  std::thread              t_;           // Thread parameter.
   std::atomic<bool>        t_flag_;      // Flag for thread loop.
   long long                t_wait_;      // wait time of thread loop, milliseconds.
-  std::thread              thread_;      // Thread parameter.
-  std::queue<std::string>  s_data_;      // Data(string type) to send in thread loop.
-  std::queue<unsigned int> ui_data_;     // Data(ui) to send in thread loop.
+  std::queue<std::string>  t_sData_;     // Data(string type) to send in thread loop.
+  std::queue<unsigned int> t_uiData_;    // Data(ui) to send in thread loop.
 
  public:
   UartSession();

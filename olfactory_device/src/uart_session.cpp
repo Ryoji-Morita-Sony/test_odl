@@ -195,22 +195,22 @@ bool UartSession::RecvData(std::string& data) {
 void UartSession::ThreadFunction() {
   std::string result = "";
 
-  while (t_flag_ || !s_data_.empty() || !ui_data_.empty()) {
-    if (!s_data_.empty()) {
-      if (!this->SendData(s_data_.front())) {
+  while (t_flag_ || !t_sData_.empty() || !t_uiData_.empty()) {
+    if (!t_sData_.empty()) {
+      if (!this->SendData(t_sData_.front())) {
         std::cerr << "Failed to send command on port: " << "\n";
       }
-      s_data_.pop();
+      t_sData_.pop();
       if (!this->RecvData(result)) {
         std::cerr << "Failed to receive result on port: " << "\n";
       }
     }
 
-    if (!ui_data_.empty()) {
-      if (!this->SendData(ui_data_.front())) {
+    if (!t_uiData_.empty()) {
+      if (!this->SendData(t_uiData_.front())) {
         std::cerr << "Failed to send command on port: " << "\n";
       }
-      ui_data_.pop();
+      t_uiData_.pop();
       if (!this->RecvData(result)) {
         std::cerr << "Failed to receive result on port: " << "\n";
       }
@@ -222,7 +222,7 @@ void UartSession::ThreadFunction() {
 }
 
 void UartSession::StartThread(long long wait) {
-  thread_ = std::thread(&UartSession::ThreadFunction, this);
+  t_ = std::thread(&UartSession::ThreadFunction, this);
   t_wait_ = wait;
   t_flag_ = true;
   std::cout << "Thread has started wait: " << wait << std::endl;
@@ -230,18 +230,18 @@ void UartSession::StartThread(long long wait) {
 
 void UartSession::StopThread() {
   t_flag_ = false;
-  if (thread_.joinable()) {
-    thread_.join();
+  if (t_.joinable()) {
+    t_.join();
   }
   std::cout << "Thread has finished." << std::endl;
 }
 
 void UartSession::SetData(const std::string& data) {
-  s_data_.push(data);
+  t_sData_.push(data);
 }
 
 void UartSession::SetData(unsigned int data) {
-  ui_data_.push(data);
+  t_uiData_.push(data);
 }
 
 
