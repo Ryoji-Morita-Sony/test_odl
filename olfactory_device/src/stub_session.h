@@ -87,29 +87,35 @@ class StubSession : public DeviceSessionIF {
  public:
   /**
    * @brief Start a thread.
+   *
+   * @return Returns true if the session is connected (simulated).
    */
-  void StartThreadFunc() override;
+  bool StartThreadFunc() override;
 
   /**
    * @brief Stop a thread.
+   *
+   * @return Returns true if the session is connected (simulated).
    */
-  void StopThreadFunc() override;
+  bool StopThreadFunc() override;
 
   /**
    * @brief Set a scent command like "release(4, 10)".
    *
    * @param cmd Scent command.
    * @param wait Seconds waiting in thread loop.
+   * @return Returns true if the session is connected (simulated).
    */
-  void SetScent(const std::string& cmd, long long wait) override;
+  bool SetScent(const std::string& cmd, long long wait) override;
 
   /**
    * @brief Set a fan command like "fan(1, 50)".
    *
    * @param cmd Fan command.
    * @param wait Seconds waiting in thread loop.
+   * @return Returns true if the session is connected (simulated).
    */
-  void SetFan(const std::string& cmd, long long wait) override;
+  bool SetFan(const std::string& cmd, long long wait) override;
 
 };
 

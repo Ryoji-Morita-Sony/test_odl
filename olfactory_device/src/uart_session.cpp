@@ -23,8 +23,6 @@
 #include <iostream>
 #include <iomanip> // for std::setw, std::setfill
 
-#define THREAD_SCENT_WAIT (6)
-
 namespace sony::olfactory_device {
 
 // Constructor
@@ -71,11 +69,7 @@ bool UartSession::Open(const char* device_id) {
   }
 
   // Set serial communication parameters
-  if (0 == strcmp(device_id, "COM4")) {       // COM4: for Kimura-san's moving-light
-    dcb_serial_params.BaudRate = CBR_9600;    // Fixed baud rate to 9600
-  } else {
-    dcb_serial_params.BaudRate = CBR_115200;  // Fixed baud rate to 115200
-  }
+  dcb_serial_params.BaudRate = CBR_115200;  // Fixed baud rate to 115200
   dcb_serial_params.ByteSize = 8;           // Data size = 8 bits
   dcb_serial_params.StopBits = ONESTOPBIT;  // One stop bit
   dcb_serial_params.Parity = NOPARITY;      // No parity
@@ -212,28 +206,52 @@ void UartSession::ThreadFunc() {
   std::cout << "Thread ending..." << std::endl;
 }
 
-void UartSession::StartThreadFunc() {
+bool UartSession::StartThreadFunc() {
+  if (!connected_) {
+      std::cerr << "UART not connected." << std::endl;
+      return false;
+  }
+
   t_flag_ = true;
   t_ = std::thread(&UartSession::ThreadFunc, this);
   std::cout << "Thread has started." << std::endl;
+  return true;
 }
 
-void UartSession::StopThreadFunc() {
+bool UartSession::StopThreadFunc() {
+  if (!connected_) {
+      std::cerr << "UART not connected." << std::endl;
+      return false;
+  }
+
   t_flag_ = false;
   if (t_.joinable()) {
     t_.join();
   }
   std::cout << "Thread has finished." << std::endl;
+  return true;
 }
 
-void UartSession::SetScent(const std::string& cmd, long long wait) {
+bool UartSession::SetScent(const std::string& cmd, long long wait) {
+  if (!connected_) {
+      std::cerr << "UART not connected." << std::endl;
+      return false;
+  }
+
   t_scent_ = cmd;
   t_wait_ = wait;
+  return true;
 }
 
-void UartSession::SetFan(const std::string& cmd, long long wait) {
+bool UartSession::SetFan(const std::string& cmd, long long wait) {
+  if (!connected_) {
+      std::cerr << "UART not connected." << std::endl;
+      return false;
+  }
+
   t_fan_ = cmd;
   t_wait_ = wait;
+  return true;
 }
 
 }  // namespace sony::olfactory_device

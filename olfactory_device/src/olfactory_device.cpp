@@ -61,8 +61,15 @@ OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
-  device_sessions[device]->StartThreadFunc();
-  //  device_sessions[device]->SetFan("fan(1, 30)", 1);
+  if (!device_sessions[device]->StartThreadFunc()) {
+    std::cerr << "Failed to start tread" << "\n";
+    return OdResult::ERROR_UNKNOWN;
+  }
+
+//  if (!device_sessions[device]->SetFan("fan(1, 30)", 1)) {
+//    std::cerr << "Failed to set FAN." << "\n";
+//    return OdResult::ERROR_UNKNOWN;
+//  }
 
   return OdResult::SUCCESS;
 }
@@ -76,8 +83,15 @@ OLFACTORY_DEVICE_API OdResult sony_odEndSession(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
-//  device_sessions[device]->SetFan("fan(1, 0)", 1);
-  device_sessions[device]->StopThreadFunc();
+//  if (!device_sessions[device]->SetFan("fan(1, 0)", 1)) {
+//    std::cerr << "Failed to set FAN." << "\n";
+//    return OdResult::ERROR_UNKNOWN;
+//  }
+
+  if (!device_sessions[device]->StopThreadFunc()) {
+    std::cerr << "Failed to stop tread" << "\n";
+    return OdResult::ERROR_UNKNOWN;
+  }
 
   // Close the session and remove it from the map
   device_sessions[device]->Close();
@@ -105,8 +119,12 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
   std::string s_level = std::to_string(i_level);
 
   std::string command = "release(" + s_scent + ", " + s_level + ")";
-  long long wait = static_cast<long long>(i_level + 6);
-  device_sessions[device]->SetScent(command, wait);
+  long long wait = static_cast<long long>(i_level + THREAD_SCENT_WAIT);
+  if (!device_sessions[device]->SetScent(command, wait)) {
+    std::cerr << "Failed to set SCENT." << "\n";
+    return OdResult::ERROR_UNKNOWN;
+  }
+
   return OdResult::SUCCESS;
 }
 
@@ -121,8 +139,12 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
 
   // Send the command to start scent emission
   std::string command = "";
-  long long wait = 6;
-  device_sessions[device]->SetScent(command, wait);
+  long long wait = THREAD_SCENT_WAIT;
+  if (!device_sessions[device]->SetScent(command, wait)) {
+    std::cerr << "Failed to set SCENT." << "\n";
+    return OdResult::ERROR_UNKNOWN;
+  }
+
   return OdResult::SUCCESS;
 }
 

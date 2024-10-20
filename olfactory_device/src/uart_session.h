@@ -26,6 +26,8 @@
 #include <atomic>
 #include <queue>
 
+#define THREAD_SCENT_WAIT (6)
+
 namespace sony::olfactory_device {
 
 /**
@@ -84,7 +86,7 @@ class UartSession : public DeviceSessionIF {
    * @brief Received data over the UART connection.
    *
    * @param data The data to receive over the UART.
-   * @return Returns true if the data was successfully sent, false otherwise.
+   * @return Returns true if the data was successfully received, false otherwise.
    */
   bool RecvData(std::string& data) override;
 
@@ -97,29 +99,35 @@ class UartSession : public DeviceSessionIF {
  public:
   /**
    * @brief Start a thread.
+   *
+   * @return Returns true if the session is connected, false otherwise.
    */
-  void StartThreadFunc() override;
+  bool StartThreadFunc() override;
 
   /**
    * @brief Stop a thread.
+   *
+   * @return Returns true if the session is connected, false otherwise.
    */
-  void StopThreadFunc() override;
+  bool StopThreadFunc() override;
 
   /**
    * @brief Set a scent command like "release(4, 10)".
    *
    * @param cmd Scent command.
    * @param wait Seconds waiting in thread loop.
+   * @return Returns true if the session is connected, false otherwise.
    */
-  void SetScent(const std::string& cmd, long long wait) override;
+  bool SetScent(const std::string& cmd, long long wait) override;
 
   /**
    * @brief Set a fan command like "fan(1, 50)".
    *
    * @param cmd Fan command.
    * @param wait Seconds waiting in thread loop.
+   * @return Returns true if the session is connected, false otherwise.
    */
-  void SetFan(const std::string& cmd, long long wait) override;
+  bool SetFan(const std::string& cmd, long long wait) override;
 
 };
 

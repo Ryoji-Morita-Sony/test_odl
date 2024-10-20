@@ -42,8 +42,7 @@ class TestOlfactoryDevice : public ::testing::Test {
 
   virtual void TearDown() {}
 
-  // 自作の関数
-  // std::wstring を const char* に変換する
+  // Convert std::wstring to const char*
   const char* ConvertWStringToConstChar(const std::wstring& wstr) {
     int bufferSize = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
     if (bufferSize == 0) {
@@ -85,7 +84,7 @@ TEST_F(TestOlfactoryDevice, DISABLED_01_start_scent_emission) {
 // Test case to stop scent emission
 TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
   std::string device_id = "COM3";
-  std::string name = "6";
+  std::string name = "4";
   float level = 0.4f;
 
   // First, start a session for device

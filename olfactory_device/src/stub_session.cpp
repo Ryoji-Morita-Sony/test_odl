@@ -111,20 +111,44 @@ void StubSession::ThreadFunc() {
   std::cout << "[StubSession] ThreadFunc called." << std::endl;
 }
 
-void StubSession::StartThreadFunc() {
+bool StubSession::StartThreadFunc() {
+  if (!connected_) {
+    std::cerr << "[StubSession] Error: Cannot start a thread, not connected to any device." << std::endl;
+    return false;
+  }
+
   std::cout << "[StubSession] StartThreadFunc called." << std::endl;
+  return true;
 }
 
-void StubSession::StopThreadFunc() {
+bool StubSession::StopThreadFunc() {
+  if (!connected_) {
+    std::cerr << "[StubSession] Error: Cannot stop a thread, not connected to any device." << std::endl;
+    return false;
+  }
+
   std::cout << "[StubSession] StopThreadFunc called." << std::endl;
+  return true;
 }
 
-void StubSession::SetScent(const std::string& cmd, long long wait) {
+bool StubSession::SetScent(const std::string& cmd, long long wait) {
+  if (!connected_) {
+    std::cerr << "[StubSession] Error: Cannot set a scent-command, not connected to any device." << std::endl;
+    return false;
+  }
+
   std::cout << "[StubSession] SetScent called with cmd: " << cmd << " wait: " << wait << std::endl;
+  return true;
 }
 
-void StubSession::SetFan(const std::string& cmd, long long wait) {
+bool StubSession::SetFan(const std::string& cmd, long long wait) {
+  if (!connected_) {
+    std::cerr << "[StubSession] Error: Cannot set a fan-command, not connected to any device." << std::endl;
+    return false;
+  }
+
   std::cout << "[StubSession] SetFan called with cmd: " << cmd << " wait: " << wait << std::endl;
+  return true;
 }
 
 }  // namespace sony::olfactory_device
