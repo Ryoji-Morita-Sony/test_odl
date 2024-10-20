@@ -26,7 +26,12 @@
 #include <atomic>
 #include <queue>
 
+#include <iostream>
+#include "osc/OscOutboundPacketStream.h"
+#include "ip/UdpSocket.h"
+
 #define THREAD_SCENT_WAIT (6)
+#define OSC_PORT (7000)
 
 namespace sony::olfactory_device {
 
@@ -38,7 +43,9 @@ namespace sony::olfactory_device {
  */
 class OscSession : public DeviceSessionIF {
  private:
-  bool connected_;      // Connection status
+  std::string       osc_ip_;      // OSC IP address
+  int               osc_port_;    // OSC port
+  bool connected_;        // Connection status
 
   std::thread       t_;       // Thread parameter.
   std::atomic<bool> t_flag_;  // Flag for thread loop.

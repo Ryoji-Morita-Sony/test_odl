@@ -27,17 +27,17 @@ namespace sony::olfactory_device {
 
 // Constructor
 UartSession::UartSession()
-    : uart_handle_(INVALID_HANDLE_VALUE),
-      connected_(false),
-      t_flag_(false),
-      t_wait_(THREAD_SCENT_WAIT),
-      t_scent_("") {}
+  : uart_handle_(INVALID_HANDLE_VALUE),
+    connected_(false),
+    t_flag_(false),
+    t_wait_(THREAD_SCENT_WAIT),
+    t_scent_("") {}
 
 // Destructor
 UartSession::~UartSession() {
-    if (connected_) {
-        Close();
-    }
+  if (connected_) {
+    Close();
+  }
 }
 
 bool UartSession::Open(const char* device_id) {
@@ -49,8 +49,7 @@ bool UartSession::Open(const char* device_id) {
 
   // Open the serial port
   std::cout << "[UartSession] device_id: " << device_id << std::endl;
-  uart_handle_ = CreateFileW(wide_port_num.c_str(), GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING,
-                             FILE_ATTRIBUTE_NORMAL, 0);
+  uart_handle_ = CreateFileW(wide_port_num.c_str(), GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 
   if (uart_handle_ == INVALID_HANDLE_VALUE) {
     std::cerr << "[UartSession] Failed to open UART port: " << port_num << std::endl;
@@ -94,63 +93,62 @@ bool UartSession::Open(const char* device_id) {
     return false;
   }
 
-  std::cout << "[UartSession] UART initialized successfully for port: " << port_num
-            << " with baud rate: " << dcb_serial_params.BaudRate << std::endl;
+  std::cout << "[UartSession] UART initialized successfully for port: " << port_num << " with baud rate: " << dcb_serial_params.BaudRate << std::endl;
   connected_ = true;
   return true;
 }
 
 void UartSession::Close() {
-    if (connected_) {
-        CloseHandle(uart_handle_);
-        uart_handle_ = INVALID_HANDLE_VALUE;
-        connected_ = false;
-        std::cout << "[UartSession] UART connection closed." << std::endl;
-    }
+  if (connected_) {
+    CloseHandle(uart_handle_);
+    uart_handle_ = INVALID_HANDLE_VALUE;
+    connected_ = false;
+    std::cout << "[UartSession] UART connection closed." << std::endl;
+  }
 }
 
 bool UartSession::IsConnected() const {
-    return connected_;
+  return connected_;
 }
 
 bool UartSession::SendData(const std::string& data) {
-    if (!connected_) {
-        std::cerr << "[UartSession] UART not connected." << std::endl;
-        return false;
-    }
+  if (!connected_) {
+    std::cerr << "[UartSession] UART not connected." << std::endl;
+    return false;
+  }
 
-    // Write data to UART (platform-dependent)
-    DWORD bytes_written;
-    if (!WriteFile(uart_handle_, data.c_str(), static_cast<DWORD>(data.size()), &bytes_written, nullptr)) {
-        std::cerr << "[UartSession] Failed to send data over UART." << std::endl;
-        return false;
-    }
+  // Write data to UART (platform-dependent)
+  DWORD bytes_written;
+  if (!WriteFile(uart_handle_, data.c_str(), static_cast<DWORD>(data.size()), &bytes_written, nullptr)) {
+    std::cerr << "[UartSession] Failed to send data over UART." << std::endl;
+    return false;
+  }
 
-    std::cout << "[UartSession] Data sent: " << data << std::endl;
-    return true;
+  std::cout << "[UartSession] Data sent: " << data << std::endl;
+  return true;
 }
 
 bool UartSession::SendData(unsigned int data) {
-    if (!connected_) {
-        std::cerr << "[UartSession] UART not connected." << std::endl;
-        return false;
-    }
+  if (!connected_) {
+    std::cerr << "[UartSession] UART not connected." << std::endl;
+    return false;
+  }
 
-    // Write data to UART (platform-dependent)
-    DWORD bytes_written;
-    unsigned char byte = 0x00;
-    unsigned int  mask = 0xFF000000;
+   // Write data to UART (platform-dependent)
+  DWORD bytes_written;
+  unsigned char byte = 0x00;
+  unsigned int  mask = 0xFF000000;
 
-    for (int i = 24; i >= 0; i = i - 8) {
-      byte = (data & mask) >> i;
-      if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
-        std::cerr << "[UartSession] Failed to send data over UART." << std::endl;
-        return false;
-      }
-      mask = mask >> 8;
+  for (int i = 24; i >= 0; i = i - 8) {
+    byte = (data & mask) >> i;
+    if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
+      std::cerr << "[UartSession] Failed to send data over UART." << std::endl;
+      return false;
     }
-    std::cout << "[UartSession] Data sent: " << std::hex << std::setw(8) << std::setfill('0') << data << std::endl;
-    return true;
+    mask = mask >> 8;
+  }
+  std::cout << "[UartSession] Data sent: " << std::hex << std::setw(8) << std::setfill('0') << data << std::endl;
+  return true;
 }
 
 bool UartSession::RecvData(std::string& data) {
@@ -184,19 +182,19 @@ void UartSession::ThreadFunc() {
   while (t_flag_) {
     if (!t_scent_._Equal("")) {
       if (!this->SendData(t_scent_)) {
-        std::cerr << "[UartSession] Failed to send a command on port: " << std::endl;
+        std::cerr << "[UartSession] Failed to send." << std::endl;
       }
       if (!this->RecvData(result)) {
-        std::cerr << "[UartSession] Failed to receive result on port: " << std::endl;
+        std::cerr << "[UartSession] Failed to receive." << std::endl;
       }
     }
 
     if (!t_fan_._Equal("")) {
       if (!this->SendData(t_fan_)) {
-        std::cerr << "[UartSession] Failed to send a command on port: " << std::endl;
+        std::cerr << "[UartSession] Failed to send." << std::endl;
       }
       if (!this->RecvData(result)) {
-        std::cerr << "[UartSession] Failed to receive result on port: " << std::endl;
+        std::cerr << "[UartSession] Failed to receive." << std::endl;
       }
       t_fan_ = "";  // Set "" in a case of FAN.
     }
@@ -208,8 +206,8 @@ void UartSession::ThreadFunc() {
 
 bool UartSession::StartThreadFunc() {
   if (!connected_) {
-      std::cerr << "[UartSession] UART not connected." << std::endl;
-      return false;
+    std::cerr << "[UartSession] UART not connected." << std::endl;
+    return false;
   }
 
   t_flag_ = true;
@@ -220,8 +218,8 @@ bool UartSession::StartThreadFunc() {
 
 bool UartSession::StopThreadFunc() {
   if (!connected_) {
-      std::cerr << "[UartSession] UART not connected." << std::endl;
-      return false;
+    std::cerr << "[UartSession] UART not connected." << std::endl;
+    return false;
   }
 
   t_flag_ = false;
@@ -234,8 +232,8 @@ bool UartSession::StopThreadFunc() {
 
 bool UartSession::SetScent(const std::string& cmd, long long wait) {
   if (!connected_) {
-      std::cerr << "[UartSession] UART not connected." << std::endl;
-      return false;
+    std::cerr << "[UartSession] UART not connected." << std::endl;
+    return false;
   }
 
   t_scent_ = cmd;
@@ -245,8 +243,8 @@ bool UartSession::SetScent(const std::string& cmd, long long wait) {
 
 bool UartSession::SetFan(const std::string& cmd, long long wait) {
   if (!connected_) {
-      std::cerr << "[UartSession] UART not connected." << std::endl;
-      return false;
+    std::cerr << "[UartSession] UART not connected." << std::endl;
+    return false;
   }
 
   t_fan_ = cmd;

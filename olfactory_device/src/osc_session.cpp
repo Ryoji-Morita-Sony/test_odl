@@ -27,7 +27,8 @@ namespace sony::olfactory_device {
 
 // Constructor
 OscSession::OscSession()
-    : 
+    : osc_ip_(""),
+      osc_port_(OSC_PORT),
       connected_(false),
       t_flag_(false),
       t_wait_(THREAD_SCENT_WAIT),
@@ -42,69 +43,61 @@ OscSession::~OscSession() {
 }
 
 bool OscSession::Open(const char* device_id) {
-  // Simulate opening a session and log the action
-  std::cout << "[OscSession] Open called with device_id (port_num): " << device_id << std::endl;
-//  std::cout << "[OscSession] If this were a real session, we would attempt to open a UART connection to port: " << device_id << std::endl;
-
-  connected_ = true;  // Simulate a successful connection
+  std::cout << "[OscSession] device_id: " << device_id << std::endl;
+  osc_ip_ = device_id;
+  connected_ = true;
   return true;
 }
 
 void OscSession::Close() {
   if (connected_) {
-    // Log the action of closing the session
-    std::cout << "[OscSession] Close called." << std::endl;
-//    std::cout << "[OscSession] If this were a real session, we would close the UART connection here." << std::endl;
-
-    connected_ = false;  // Simulate closing the connection
+    connected_ = false;
+    std::cout << "[OscSession] OSC connection closed." << std::endl;
   }
 }
 
 bool OscSession::IsConnected() const {
-  // Log the check and return the simulated connection status
-  std::cout << "[OscSession] IsConnected called." << std::endl;
-//  std::cout << "[OscSession] If this were a real session, we would check if the UART connection is active." << std::endl;
-
   return connected_;
 }
 
 bool OscSession::SendData(const std::string& data) {
   if (!connected_) {
-    std::cerr << "[OscSession] Error: Cannot send data, not connected to any device." << std::endl;
+    std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 
-  // Log the data being sent and simulate the sending operation
-  std::cout << "[OscSession] SendData called with data: " << data << std::endl;
-//  std::cout << "[OscSession] If this were a real session, we would send the data over the UART connection." << std::endl;
+  // Write data to OSC (platform-dependent)
+  UdpTransmitSocket transmitSocket(IpEndpointName(osc_ip_.c_str(), OSC_PORT));
 
-  return true;  // Simulate successful data transmission
+  char buffer[1024] = {0};
+  osc::OutboundPacketStream p(buffer, sizeof(buffer) - 1);
+
+  p << osc::BeginBundleImmediate << osc::BeginMessage("/test") << 123 << 456.789f << "hello" << osc::EndMessage << osc::EndBundle;
+  transmitSocket.Send(p.Data(), p.Size());
+
+  std::cout << "[OscSession] Data sent: " << data << std::endl;
+  return true;
 }
 
 bool OscSession::SendData(unsigned int data) {
   if (!connected_) {
-    std::cerr << "[OscSession] Error: Cannot send data, not connected to any device." << std::endl;
+    std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 
-  // Log the data being sent and simulate the sending operation
-  std::cout << "[OscSession] SendData called with data: " << data << std::endl;
-//  std::cout << "[OscSession] If this were a real session, we would send the data over the UART connection." << std::endl;
-
-  return true;  // Simulate successful data transmission
+  std::cout << "[OscSession] Data sent: " << data << std::endl;
+  return false;
 }
 
 bool OscSession::RecvData(std::string& data) {
   if (!connected_) {
-    std::cerr << "[OscSession] Error: Cannot receive data, not connected to any device." << std::endl;
+    std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 
   // Log the data being sent and simulate the sending operation
-  std::cout << "[OscSession] RecvData called, no data received because of a simulate." << std::endl;
-//  std::cout << "[OscSession] If this were a real session, we would receive the data over the UART connection." << std::endl;
-
-  return true;  // Simulate successful data transmission
+  std::cout << "[OscSession] Data recv: " << data << std::endl;
+  return true;
 }
 
 void OscSession::ThreadFunc() {
@@ -113,19 +106,19 @@ void OscSession::ThreadFunc() {
   while (t_flag_) {
     if (!t_scent_._Equal("")) {
       if (!this->SendData(t_scent_)) {
-        std::cerr << "[OscSession] Failed to send a command on port: " << std::endl;
+        std::cerr << "[OscSession] Failed to send." << std::endl;
       }
       if (!this->RecvData(result)) {
-        std::cerr << "[OscSession] Failed to receive result on port: " << std::endl;
+        std::cerr << "[OscSession] Failed to receive." << std::endl;
       }
     }
 
     if (!t_fan_._Equal("")) {
       if (!this->SendData(t_fan_)) {
-        std::cerr << "[OscSession] Failed to send a command on port: " << std::endl;
+        std::cerr << "[OscSession] Failed to send." << std::endl;
       }
       if (!this->RecvData(result)) {
-        std::cerr << "[OscSession] Failed to receive result on port: " << std::endl;
+        std::cerr << "[OscSession] Failed to receive." << std::endl;
       }
       t_fan_ = "";  // Set "" in a case of FAN.
     }
@@ -137,7 +130,7 @@ void OscSession::ThreadFunc() {
 
 bool OscSession::StartThreadFunc() {
   if (!connected_) {
-    std::cerr << "[OscSession] Error: Cannot start a thread, not connected to any device." << std::endl;
+    std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 
@@ -149,7 +142,7 @@ bool OscSession::StartThreadFunc() {
 
 bool OscSession::StopThreadFunc() {
   if (!connected_) {
-    std::cerr << "[OscSession] Error: Cannot stop a thread, not connected to any device." << std::endl;
+    std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 
@@ -163,7 +156,7 @@ bool OscSession::StopThreadFunc() {
 
 bool OscSession::SetScent(const std::string& cmd, long long wait) {
   if (!connected_) {
-    std::cerr << "[OscSession] Error: Cannot set a scent-command, not connected to any device." << std::endl;
+    std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 
@@ -174,7 +167,7 @@ bool OscSession::SetScent(const std::string& cmd, long long wait) {
 
 bool OscSession::SetFan(const std::string& cmd, long long wait) {
   if (!connected_) {
-    std::cerr << "[OscSession] Error: Cannot set a fan-command, not connected to any device." << std::endl;
+    std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 

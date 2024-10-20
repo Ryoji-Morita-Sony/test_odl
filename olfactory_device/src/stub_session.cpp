@@ -75,7 +75,7 @@ bool StubSession::SendData(const std::string& data) {
   }
 
   // Log the data being sent and simulate the sending operation
-  std::cout << "[StubSession] SendData called with data: " << data << std::endl;
+  std::cout << "[StubSession] Data sent: no data because of a simulate: " << data << std::endl;
 //  std::cout << "[StubSession] If this were a real session, we would send the data over the UART connection." << std::endl;
 
   return true;  // Simulate successful data transmission
@@ -88,7 +88,7 @@ bool StubSession::SendData(unsigned int data) {
   }
 
   // Log the data being sent and simulate the sending operation
-  std::cout << "[StubSession] SendData called with data: " << data << std::endl;
+  std::cout << "[StubSession] Data sent: no data because of a simulate: " << data << std::endl;
 //  std::cout << "[StubSession] If this were a real session, we would send the data over the UART connection." << std::endl;
 
   return true;  // Simulate successful data transmission
@@ -101,7 +101,7 @@ bool StubSession::RecvData(std::string& data) {
   }
 
   // Log the data being sent and simulate the sending operation
-  std::cout << "[StubSession] RecvData called, no data received because of a simulate." << std::endl;
+  std::cout << "[StubSession] Data recv: no data because of a simulate." << std::endl;
 //  std::cout << "[StubSession] If this were a real session, we would receive the data over the UART connection." << std::endl;
 
   return true;  // Simulate successful data transmission
@@ -113,19 +113,19 @@ void StubSession::ThreadFunc() {
   while (t_flag_) {
     if (!t_scent_._Equal("")) {
       if (!this->SendData(t_scent_)) {
-        std::cerr << "[StubSession] Failed to send a command on port: " << std::endl;
+        std::cerr << "[StubSession] Failed to send." << std::endl;
       }
       if (!this->RecvData(result)) {
-        std::cerr << "[StubSession] Failed to receive result on port: " << std::endl;
+        std::cerr << "[StubSession] Failed to receive." << std::endl;
       }
     }
 
     if (!t_fan_._Equal("")) {
       if (!this->SendData(t_fan_)) {
-        std::cerr << "[StubSession] Failed to send a command on port: " << std::endl;
+        std::cerr << "[StubSession] Failed to send." << std::endl;
       }
       if (!this->RecvData(result)) {
-        std::cerr << "[StubSession] Failed to receive result on port: " << std::endl;
+        std::cerr << "[StubSession] Failed to receive." << std::endl;
       }
       t_fan_ = "";  // Set "" in a case of FAN.
     }
