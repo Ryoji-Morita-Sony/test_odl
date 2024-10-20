@@ -19,7 +19,6 @@
  */
 
 #pragma once
-
 #include "device_session_if.h"
 #include <string>
 #include <windows.h>
@@ -32,14 +31,14 @@
 namespace sony::olfactory_device {
 
 /**
- * @brief StubSession class implements the DeviceSessionIF interface for testing and debugging.
+ * @brief OscSession class implements the DeviceSessionIF interface for OSC communication.
  *
- * This class simulates a device session by logging the operations and arguments received.
- * It provides insight into what actions would be taken if this were a real session.
+ * This class manages the OSC session, providing methods to open, close, check connection status,
+ * and send data over a OSC connection.
  */
-class StubSession : public DeviceSessionIF {
+class OscSession : public DeviceSessionIF {
  private:
-  bool connected_;  // Simulated connection status
+  bool connected_;      // Connection status
 
   std::thread       t_;       // Thread parameter.
   std::atomic<bool> t_flag_;  // Flag for thread loop.
@@ -48,34 +47,34 @@ class StubSession : public DeviceSessionIF {
   std::string       t_fan_;   // Fan command to send in thread loop.
 
  public:
-  StubSession();
-  ~StubSession() override;
+  OscSession();
+  ~OscSession() override;
 
   /**
-   * @brief Simulates opening a session with the specified device.
+   * @brief Opens a OSC session with the specified device.
    *
-   * @param device_id The identifier of the UART device (e.g., COM port name).
-   * @return Always returns true to simulate a successful connection.
+   * @param device_id The identifier of the OSC device (e.g., IP, port name).
+   * @return Returns true if the connection was successfully established, false otherwise.
    */
   bool Open(const char* device_id) override;
 
   /**
-   * @brief Simulates closing the session.
+   * @brief Closes the OSC session.
    */
   void Close() override;
 
   /**
-   * @brief Simulates checking if the session is connected.
+   * @brief Checks if the OSC session is connected.
    *
-   * @return Returns true if the session is connected (simulated).
+   * @return Returns true if the session is connected, false otherwise.
    */
   bool IsConnected() const override;
 
   /**
-   * @brief Simulates sending data over the session.
+   * @brief Sends data over the OSC connection.
    *
-   * @param data The data that would be sent over the session.
-   * @return Always returns true to simulate successful data transmission.
+   * @param data The data to send over the OSC.
+   * @return Returns true if the data was successfully sent, false otherwise.
    */
   bool SendData(const std::string& data) override;
 
@@ -83,10 +82,10 @@ class StubSession : public DeviceSessionIF {
   bool SendData(unsigned int data) override;
 
   /**
-   * @brief Simulates received data over the session.
+   * @brief Received data over the OSC connection.
    *
-   * @param data The data that would be received over the session.
-   * @return Always returns true to simulate successful data transmission.
+   * @param data The data to receive over the OSC.
+   * @return Returns true if the data was successfully sent, false otherwise.
    */
   bool RecvData(std::string& data) override;
 
@@ -100,14 +99,14 @@ class StubSession : public DeviceSessionIF {
   /**
    * @brief Start a thread.
    *
-   * @return Returns true if the session is connected (simulated).
+   * @return Returns true if the session is connected, false otherwise.
    */
   bool StartThreadFunc() override;
 
   /**
    * @brief Stop a thread.
    *
-   * @return Returns true if the session is connected (simulated).
+   * @return Returns true if the session is connected, false otherwise.
    */
   bool StopThreadFunc() override;
 
@@ -116,7 +115,7 @@ class StubSession : public DeviceSessionIF {
    *
    * @param cmd Scent command.
    * @param wait Seconds waiting in thread loop.
-   * @return Returns true if the session is connected (simulated).
+   * @return Returns true if the session is connected, false otherwise.
    */
   bool SetScent(const std::string& cmd, long long wait) override;
 
@@ -125,7 +124,7 @@ class StubSession : public DeviceSessionIF {
    *
    * @param cmd Fan command.
    * @param wait Seconds waiting in thread loop.
-   * @return Returns true if the session is connected (simulated).
+   * @return Returns true if the session is connected, false otherwise.
    */
   bool SetFan(const std::string& cmd, long long wait) override;
 
