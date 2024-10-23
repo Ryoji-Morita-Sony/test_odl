@@ -22,6 +22,12 @@ file(GLOB_RECURSE include
 )
 source_group("include" FILES ${include})
 
+file(GLOB_RECURSE oscpack
+    ${CMAKE_SOURCE_DIR}/third_party/oscpack/osc/*.h
+    ${CMAKE_SOURCE_DIR}/third_party/oscpack/ip/*.h
+)
+source_group("oscpack" FILES ${oscpack})
+
 ###########################
 # Library
 ###########################
@@ -37,6 +43,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE -DBUILD_DLL)
 ###########################
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/third_party/oscpack/
 )
 
 ###########################
@@ -46,6 +53,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 ###########################
 # Link Libraries
 ###########################
+# Link the oscpack library
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    $<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/third_party/oscpack/build/Debug/oscpack.lib>
+    $<$<CONFIG:Release>:${CMAKE_SOURCE_DIR}/third_party/oscpack/build/Release/oscpack.lib>
+)
+
+# Link libs used in oscpack
+target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32 winmm)
 
 ###########################
 # Install
