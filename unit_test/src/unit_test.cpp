@@ -42,8 +42,7 @@ class TestOlfactoryDevice : public ::testing::Test {
 
   virtual void TearDown() {}
 
-  // 自作の関数
-  // std::wstring を const char* に変換する
+  // Convert std::wstring to const char*
   const char* ConvertWStringToConstChar(const std::wstring& wstr) {
     int bufferSize = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
     if (bufferSize == 0) {
@@ -58,7 +57,7 @@ class TestOlfactoryDevice : public ::testing::Test {
 };
 
 // Test case to start scent emission with float level
-TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
+TEST_F(TestOlfactoryDevice, DISABLED_01_start_scent_emission) {
   std::string device_id = "COM3";
   std::string name = "4";
   float level = 0.85f;
@@ -83,10 +82,10 @@ TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
 }
 
 // Test case to stop scent emission
-TEST_F(TestOlfactoryDevice, DISABLED_02_stop_scent_emission) {
+TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
   std::string device_id = "COM3";
-  std::string name = "1";
-  float level = 0.75f;
+  std::string name = "4";
+  float level = 0.4f;
 
   // First, start a session for device
   OdResult result = sony_odStartSession(device_id.c_str());
@@ -95,10 +94,14 @@ TEST_F(TestOlfactoryDevice, DISABLED_02_stop_scent_emission) {
   // Start scent emission for device
   result = sony_odStartScentEmission(device_id.c_str(), name.c_str(), level);
   ASSERT_EQ(result, OdResult::SUCCESS);
+  std::this_thread::sleep_for(std::chrono::seconds(30));
+//Sleep(20000);   // milliseconds
 
   // Stop the scent emission for device
   result = sony_odStopScentEmission(device_id.c_str());
   ASSERT_EQ(result, OdResult::SUCCESS);
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+  // Sleep(20000);   // milliseconds
 
   // End the session for device
   result = sony_odEndSession(device_id.c_str());

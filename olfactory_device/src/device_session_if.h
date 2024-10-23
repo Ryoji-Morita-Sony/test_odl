@@ -83,28 +83,40 @@ class DeviceSessionIF {
   /**
    * @brief Thread function.
    */
-  virtual void ThreadFunction() = 0;
+  virtual void ThreadFunc() = 0;
 
  public:
   /**
    * @brief Start a thread.
    *
-   * @param wait milliseconds waiting in thread loop.
+   * @return Returns true if it succeeded, false otherwise.
    */
-  virtual void StartThread(long long wait) = 0;
+  virtual bool StartThreadFunc() = 0;
 
   /**
    * @brief Stop a thread.
+   *
+   * @return Returns true if it succeeded, false otherwise.
    */
-  virtual void StopThread() = 0;
+  virtual bool StopThreadFunc() = 0;
 
   /**
-   * @brief Set a data.
+   * @brief Set a scent command like "release(4, 10)".
    *
-   * @param data A data to set in thread loop.
+   * @param cmd Scent command.
+   * @param wait Seconds waiting in thread loop.
+   * @return Returns true if it succeeded, false otherwise.
    */
-  virtual void SetData(const std::string& data) = 0;
-  virtual void SetData(unsigned int data) = 0;
+  virtual bool SetScent(const std::string& cmd, long long wait) = 0;
+
+  /**
+   * @brief Set a fan command like "fan(1, 50)".
+   *
+   * @param cmd Fan command.
+   * @param wait Seconds waiting in thread loop.
+   * @return Returns true if it succeeded, false otherwise.
+   */
+  virtual bool SetFan(const std::string& cmd, long long wait) = 0;
 
 };
 

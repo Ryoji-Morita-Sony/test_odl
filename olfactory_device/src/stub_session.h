@@ -22,6 +22,12 @@
 
 #include "device_session_if.h"
 #include <string>
+#include <windows.h>
+#include <thread>
+#include <atomic>
+#include <queue>
+
+#define THREAD_SCENT_WAIT (6)
 
 namespace sony::olfactory_device {
 
@@ -34,6 +40,12 @@ namespace sony::olfactory_device {
 class StubSession : public DeviceSessionIF {
  private:
   bool connected_;  // Simulated connection status
+
+  std::thread       t_;       // Thread parameter.
+  std::atomic<bool> t_flag_;  // Flag for thread loop.
+  long long         t_wait_;  // Time waiting in thread loop, seconds.
+  std::string       t_scent_; // Scent command to send in thread loop.
+  std::string       t_fan_;   // Fan command to send in thread loop.
 
  public:
   StubSession();
@@ -82,28 +94,40 @@ class StubSession : public DeviceSessionIF {
   /**
    * @brief Thread function.
    */
-  void ThreadFunction() override;
+  void ThreadFunc() override;
 
  public:
   /**
    * @brief Start a thread.
    *
-   * @param wait milliseconds waiting in thread loop.
+   * @return Returns true if the session is connected (simulated).
    */
-  void StartThread(long long wait) override;
+  bool StartThreadFunc() override;
 
   /**
    * @brief Stop a thread.
+   *
+   * @return Returns true if the session is connected (simulated).
    */
-  void StopThread() override;
+  bool StopThreadFunc() override;
 
   /**
-   * @brief Set a data.
+   * @brief Set a scent command like "release(4, 10)".
    *
-   * @param data A data to set in thread loop.
+   * @param cmd Scent command.
+   * @param wait Seconds waiting in thread loop.
+   * @return Returns true if the session is connected (simulated).
    */
-  void SetData(const std::string& data) override;
-  void SetData(unsigned int data) override;
+  bool SetScent(const std::string& cmd, long long wait) override;
+
+  /**
+   * @brief Set a fan command like "fan(1, 50)".
+   *
+   * @param cmd Fan command.
+   * @param wait Seconds waiting in thread loop.
+   * @return Returns true if the session is connected (simulated).
+   */
+  bool SetFan(const std::string& cmd, long long wait) override;
 
 };
 

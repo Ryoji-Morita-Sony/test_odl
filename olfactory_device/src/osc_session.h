@@ -26,20 +26,26 @@
 #include <atomic>
 #include <queue>
 
+#include <iostream>
+#include "osc/OscOutboundPacketStream.h"
+#include "ip/UdpSocket.h"
+
 #define THREAD_SCENT_WAIT (6)
+#define OSC_PORT (7000)
 
 namespace sony::olfactory_device {
 
 /**
- * @brief UartSession class implements the DeviceSessionIF interface for UART communication.
+ * @brief OscSession class implements the DeviceSessionIF interface for OSC communication.
  *
- * This class manages the UART session, providing methods to open, close, check connection status,
- * and send data over a UART connection.
+ * This class manages the OSC session, providing methods to open, close, check connection status,
+ * and send data over a OSC connection.
  */
-class UartSession : public DeviceSessionIF {
+class OscSession : public DeviceSessionIF {
  private:
-  HANDLE uart_handle_;  // Handle to the UART connection
-  bool connected_;      // Connection status
+  std::string       osc_ip_;      // OSC IP address
+  int               osc_port_;    // OSC port
+  bool connected_;        // Connection status
 
   std::thread       t_;       // Thread parameter.
   std::atomic<bool> t_flag_;  // Flag for thread loop.
@@ -48,33 +54,33 @@ class UartSession : public DeviceSessionIF {
   std::string       t_fan_;   // Fan command to send in thread loop.
 
  public:
-  UartSession();
-  ~UartSession() override;
+  OscSession();
+  ~OscSession() override;
 
   /**
-   * @brief Opens a UART session with the specified device.
+   * @brief Opens a OSC session with the specified device.
    *
-   * @param device_id The identifier of the UART device (e.g., COM port name).
+   * @param device_id The identifier of the OSC device (e.g., IP, port name).
    * @return Returns true if the connection was successfully established, false otherwise.
    */
   bool Open(const char* device_id) override;
 
   /**
-   * @brief Closes the UART session.
+   * @brief Closes the OSC session.
    */
   void Close() override;
 
   /**
-   * @brief Checks if the UART session is connected.
+   * @brief Checks if the OSC session is connected.
    *
    * @return Returns true if the session is connected, false otherwise.
    */
   bool IsConnected() const override;
 
   /**
-   * @brief Sends data over the UART connection.
+   * @brief Sends data over the OSC connection.
    *
-   * @param data The data to send over the UART.
+   * @param data The data to send over the OSC.
    * @return Returns true if the data was successfully sent, false otherwise.
    */
   bool SendData(const std::string& data) override;
@@ -83,10 +89,10 @@ class UartSession : public DeviceSessionIF {
   bool SendData(unsigned int data) override;
 
   /**
-   * @brief Received data over the UART connection.
+   * @brief Received data over the OSC connection.
    *
-   * @param data The data to receive over the UART.
-   * @return Returns true if the data was successfully received, false otherwise.
+   * @param data The data to receive over the OSC.
+   * @return Returns true if the data was successfully sent, false otherwise.
    */
   bool RecvData(std::string& data) override;
 

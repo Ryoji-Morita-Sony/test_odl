@@ -21,11 +21,18 @@
 #include "stub_session.h"
 
 #include <iostream>
+#include <iomanip> // for std::setw, std::setfill
 
 namespace sony::olfactory_device {
 
 // Constructor
-StubSession::StubSession() : connected_(false) {}
+StubSession::StubSession()
+    : 
+      connected_(false),
+      t_flag_(false),
+      t_wait_(THREAD_SCENT_WAIT),
+      t_scent_(""),
+      t_fan_("") {}
 
 // Destructor
 StubSession::~StubSession() {
@@ -37,9 +44,7 @@ StubSession::~StubSession() {
 bool StubSession::Open(const char* device_id) {
   // Simulate opening a session and log the action
   std::cout << "[StubSession] Open called with device_id (port_num): " << device_id << std::endl;
-  std::cout
-      << "[StubSession] If this were a real session, we would attempt to open a UART connection to port: "
-      << device_id << std::endl;
+//  std::cout << "[StubSession] If this were a real session, we would attempt to open a UART connection to port: " << device_id << std::endl;
 
   connected_ = true;  // Simulate a successful connection
   return true;
@@ -49,8 +54,7 @@ void StubSession::Close() {
   if (connected_) {
     // Log the action of closing the session
     std::cout << "[StubSession] Close called." << std::endl;
-    std::cout << "[StubSession] If this were a real session, we would close the UART connection here."
-              << std::endl;
+//    std::cout << "[StubSession] If this were a real session, we would close the UART connection here." << std::endl;
 
     connected_ = false;  // Simulate closing the connection
   }
@@ -59,8 +63,7 @@ void StubSession::Close() {
 bool StubSession::IsConnected() const {
   // Log the check and return the simulated connection status
   std::cout << "[StubSession] IsConnected called." << std::endl;
-  std::cout << "[StubSession] If this were a real session, we would check if the UART connection is active."
-            << std::endl;
+//  std::cout << "[StubSession] If this were a real session, we would check if the UART connection is active." << std::endl;
 
   return connected_;
 }
@@ -72,9 +75,8 @@ bool StubSession::SendData(const std::string& data) {
   }
 
   // Log the data being sent and simulate the sending operation
-  std::cout << "[StubSession] SendData called with data: " << data << std::endl;
-  std::cout << "[StubSession] If this were a real session, we would send the data over the UART connection."
-            << std::endl;
+  std::cout << "[StubSession] Data sent: no data because of a simulate: " << data << std::endl;
+//  std::cout << "[StubSession] If this were a real session, we would send the data over the UART connection." << std::endl;
 
   return true;  // Simulate successful data transmission
 }
@@ -86,9 +88,8 @@ bool StubSession::SendData(unsigned int data) {
   }
 
   // Log the data being sent and simulate the sending operation
-  std::cout << "[StubSession] SendData called with data: " << data << std::endl;
-  std::cout << "[StubSession] If this were a real session, we would send the data over the UART connection."
-            << std::endl;
+  std::cout << "[StubSession] Data sent: no data because of a simulate: " << data << std::endl;
+//  std::cout << "[StubSession] If this were a real session, we would send the data over the UART connection." << std::endl;
 
   return true;  // Simulate successful data transmission
 }
@@ -100,31 +101,86 @@ bool StubSession::RecvData(std::string& data) {
   }
 
   // Log the data being sent and simulate the sending operation
-  std::cout << "[StubSession] RecvData called with data: " << data << std::endl;
-  std::cout << "[StubSession] If this were a real session, we would receive the data over the UART connection."
-            << std::endl;
+  std::cout << "[StubSession] Data recv: no data because of a simulate." << std::endl;
+//  std::cout << "[StubSession] If this were a real session, we would receive the data over the UART connection." << std::endl;
 
   return true;  // Simulate successful data transmission
 }
 
-void StubSession::ThreadFunction() {
-  std::cout << "[StubSession] ThreadFunction called." << std::endl;
+void StubSession::ThreadFunc() {
+  std::string result = "";
+
+  while (t_flag_) {
+    if (!t_scent_._Equal("")) {
+      if (!this->SendData(t_scent_)) {
+        std::cerr << "[StubSession] Failed to send." << std::endl;
+      }
+      if (!this->RecvData(result)) {
+        std::cerr << "[StubSession] Failed to receive." << std::endl;
+      }
+    }
+
+    if (!t_fan_._Equal("")) {
+      if (!this->SendData(t_fan_)) {
+        std::cerr << "[StubSession] Failed to send." << std::endl;
+      }
+      if (!this->RecvData(result)) {
+        std::cerr << "[StubSession] Failed to receive." << std::endl;
+      }
+      t_fan_ = "";  // Set "" in a case of FAN.
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(t_wait_));
+  }
+  std::cout << "[StubSession] Thread ending..." << std::endl;
 }
 
-void StubSession::StartThread(long long wait) {
-  std::cout << "[StubSession] StartThread called with wait: " << wait << std::endl;
+bool StubSession::StartThreadFunc() {
+  if (!connected_) {
+    std::cerr << "[StubSession] Error: Cannot start a thread, not connected to any device." << std::endl;
+    return false;
+  }
+
+  t_flag_ = true;
+  t_ = std::thread(&StubSession::ThreadFunc, this);
+  std::cout << "[StubSession] Thread has started." << std::endl;
+  return true;
 }
 
-void StubSession::StopThread() {
-  std::cout << "[StubSession] StopThread called." << std::endl;
+bool StubSession::StopThreadFunc() {
+  if (!connected_) {
+    std::cerr << "[StubSession] Error: Cannot stop a thread, not connected to any device." << std::endl;
+    return false;
+  }
+
+  t_flag_ = false;
+  if (t_.joinable()) {
+    t_.join();
+  }
+  std::cout << "[StubSession] Thread has finished." << std::endl;
+  return true;
 }
 
-void StubSession::SetData(const std::string& data) {
-  std::cout << "[StubSession] SetData called with data: " << data << std::endl;
+bool StubSession::SetScent(const std::string& cmd, long long wait) {
+  if (!connected_) {
+    std::cerr << "[StubSession] Error: Cannot set a scent-command, not connected to any device." << std::endl;
+    return false;
+  }
+
+  t_scent_ = cmd;
+  t_wait_ = wait;
+  return true;
 }
 
-void StubSession::SetData(unsigned int data) {
-  std::cout << "[StubSession] SetData called with data: " << data << std::endl;
+bool StubSession::SetFan(const std::string& cmd, long long wait) {
+  if (!connected_) {
+    std::cerr << "[StubSession] Error: Cannot set a fan-command, not connected to any device." << std::endl;
+    return false;
+  }
+
+  t_fan_ = cmd;
+  t_wait_ = wait;
+  return true;
 }
 
 }  // namespace sony::olfactory_device
