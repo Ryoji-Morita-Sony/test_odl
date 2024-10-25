@@ -66,6 +66,58 @@ class DeviceSessionIF {
   virtual bool SendData(const std::string& data) = 0;
 
   // Add any other necessary interface methods here
+  virtual bool SendData(unsigned int data) = 0;
+
+  /**
+   * @brief Receives data from the connected device.
+   *
+   * This function receives the specified data from the device over the active connection.
+   * The device must be connected before calling this function.
+   *
+   * @param data A reference to the string containing the data to receive.
+   * @return Returns true if the data was successfully sent, false otherwise.
+   */
+  virtual bool RecvData(std::string& data) = 0;
+
+ private:
+  /**
+   * @brief Thread function.
+   */
+  virtual void ThreadFunc() = 0;
+
+ public:
+  /**
+   * @brief Start a thread.
+   *
+   * @return Returns true if it succeeded, false otherwise.
+   */
+  virtual bool StartThreadFunc() = 0;
+
+  /**
+   * @brief Stop a thread.
+   *
+   * @return Returns true if it succeeded, false otherwise.
+   */
+  virtual bool StopThreadFunc() = 0;
+
+  /**
+   * @brief Set a scent command like "release(4, 10)".
+   *
+   * @param cmd Scent command.
+   * @param wait Seconds waiting in thread loop.
+   * @return Returns true if it succeeded, false otherwise.
+   */
+  virtual bool SetScent(const std::string& cmd, long long wait) = 0;
+
+  /**
+   * @brief Set a fan command like "fan(1, 50)".
+   *
+   * @param cmd Fan command.
+   * @param wait Seconds waiting in thread loop.
+   * @return Returns true if it succeeded, false otherwise.
+   */
+  virtual bool SetFan(const std::string& cmd, long long wait) = 0;
+
 };
 
 }  // namespace sony::olfactory_device
