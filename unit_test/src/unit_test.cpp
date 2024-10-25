@@ -57,7 +57,7 @@ class TestOlfactoryDevice : public ::testing::Test {
 };
 
 // Test case to start scent emission with float level
-TEST_F(TestOlfactoryDevice, DISABLED_01_start_scent_emission) {
+TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
   std::string device_id = "COM3";
   std::string name = "4";
   float level = 0.85f;
@@ -109,7 +109,7 @@ TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
 }
 
 // Test case to handle the case where no session is active when stopping scent emission
-TEST_F(TestOlfactoryDevice, DISABLED_03_stop_scent_emission_without_session) {
+TEST_F(TestOlfactoryDevice, 03_stop_scent_emission_without_session) {
   std::string device_id = "COM3";
 
   // Attempt to stop scent emission without starting a session

@@ -32,7 +32,7 @@
 namespace sony::olfactory_device {
 
 // Uncomment to use the StubSession for testing
-//#define USE_STUB_SESSION
+#define USE_STUB_SESSION
 //#define USE_UART_SESSION
 
 #ifdef USE_STUB_SESSION
