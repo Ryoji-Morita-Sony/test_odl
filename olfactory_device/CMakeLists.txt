@@ -53,6 +53,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 ###########################
 # Link Libraries
 ###########################
+# Link the spdlog
+#find_package(spdlog CONFIG REQUIRED)
+#target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog)
+find_package(log-settings CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE log-settings::log-settings)
+
 # Link the oscpack library
 target_link_libraries(${PROJECT_NAME} PRIVATE
     $<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/third_party/oscpack/build/Debug/oscpack.lib>

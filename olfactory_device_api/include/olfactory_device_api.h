@@ -36,6 +36,13 @@ OdResult LoadRuntimeLibrary();
 void UnloadRuntimeLibrary();
 
 /**
+ * @brief Register a log callback function
+ * @param[in] callback The callback function to be called with log messages and their levels
+ * @return OdResult Returns SUCCESS if the callback is registered successfully, otherwise ERROR_UNKNOWN
+ */
+OdResult RegisterLogCallback(OdLogCallback callback);
+
+/**
  * @brief Start a session for the specified device.
  * @param[in] device_id The UART port number (e.g., "COM3") representing the device
  * @return OdResult Returns SUCCESS if the session starts successfully, otherwise ERROR_UNKNOWN
