@@ -24,7 +24,6 @@
 #include "stub_session.h"
 #include "osc_session.h"
 
-#include <iostream>
 #include <unordered_map>
 #include <iomanip> // for std::setw, std::setfill
 #include <string>
