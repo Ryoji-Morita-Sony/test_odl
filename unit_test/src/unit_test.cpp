@@ -20,6 +20,7 @@
 
 #include "gtest/gtest.h"
 #include "olfactory_device.h"
+#include "olfactory_device_defs.h"
 using namespace sony::olfactory_device;
 
 #include <stdio.h>
@@ -54,6 +55,11 @@ class TestOlfactoryDevice : public ::testing::Test {
     return buffer;
   }
 
+  // Log callback function
+  static void CustomLogCallback(const char* message, OdLogLevel level) {
+    std::cout << "[Log Level: " << static_cast<int>(level) << "] " << message << std::endl;
+  }
+
 };
 
 // Test case to start scent emission with float level
@@ -62,8 +68,13 @@ TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
   std::string name = "4";
   float level = 0.85f;
 
+  // Register the custom log callback function
+  OdResult result =
+      sony::olfactory_device::sony_odRegisterLogCallback(TestOlfactoryDevice::CustomLogCallback);
+  ASSERT_EQ(result, OdResult::SUCCESS);
+
   // First, start a session for device
-  OdResult result = sony_odStartSession(device_id.c_str());
+  result = sony_odStartSession(device_id.c_str());
   ASSERT_EQ(result, OdResult::SUCCESS);
 
   // wait

@@ -36,4 +36,21 @@ enum class OdResult : int32_t {
 
   MAX = INT32_MAX
 };
+
+enum class OdLogLevel : int32_t {
+  TRACE = 0,     ///< Trace
+  DEBUG = 1,     ///< Debug
+  INFO = 2,      ///< Info
+  WARN = 3,      ///< Warn
+  ERR = 4,       ///< Error
+  CRITICAL = 5,  ///< Critical
+  OFF = 6        ///< Off
+};
 #pragma endregion ENUM_DEFINITION
+
+/**
+ * @brief Log callback function type with log level
+ * @param[in] level The log level of the message
+ * @param[in] message The log message
+ */
+using OdLogCallback = void (*)(const char*, OdLogLevel);

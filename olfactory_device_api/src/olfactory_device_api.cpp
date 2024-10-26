@@ -47,6 +47,7 @@ bool IsRuntimeLibraryValid() { return handle != nullptr; }
   using name##_t = OdResult (*)(__VA_ARGS__); \
   name##_t name = nullptr;
 
+DLL_FUNC_DEFINE(sony_odRegisterLogCallback, OdLogCallback)
 DLL_FUNC_DEFINE(sony_odStartSession, const char*)
 DLL_FUNC_DEFINE(sony_odEndSession, const char*)
 DLL_FUNC_DEFINE(sony_odSetScentOrientation, const char*, float, float)
@@ -111,6 +112,7 @@ OdResult LoadRuntimeLibrary() {
 
 #pragma warning(push)
 #pragma warning(disable : 4191)
+  GET_FUNCTION(sony_odRegisterLogCallback);
   GET_FUNCTION(sony_odStartSession);
   GET_FUNCTION(sony_odEndSession);
   GET_FUNCTION(sony_odSetScentOrientation);
@@ -126,6 +128,18 @@ OdResult LoadRuntimeLibrary() {
 void UnloadRuntimeLibrary() {
   ::FreeLibrary(handle);
   handle = nullptr;
+}
+
+OdResult RegisterLogCallback(OdLogCallback callback) {
+  if (!IsRuntimeLibraryValid()) {
+    return OdResult::ERROR_LIBRARY_NOT_FOUND;
+  }
+
+  if (sony_odRegisterLogCallback == nullptr) {
+    return OdResult::ERROR_FUNCTION_UNSUPPORTED;
+  }
+
+  return sony_odRegisterLogCallback(callback);
 }
 
 OdResult StartSession(const char* device_id) {
