@@ -1,3 +1,6 @@
 [submodule "third_party/oscpack"]
 	path = third_party/oscpack
 	url = https://github.com/RossBencina/oscpack.git
+[submodule "third_party/vcpkg"]
+	path = third_party/vcpkg
+	url = https://github.com/microsoft/vcpkg.git
