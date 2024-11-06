@@ -31,9 +31,8 @@ OscSession::OscSession()
       osc_port_(OSC_PORT),
       connected_(false),
       t_flag_(false),
-      t_wait_(THREAD_SCENT_WAIT),
-      t_scent_(""),
-      t_fan_("") {}
+      t_wait_(THREAD_WAIT),
+      t_cmd_("") {}
 
 // Destructor
 OscSession::~OscSession() {
@@ -72,7 +71,7 @@ bool OscSession::SendData(const std::string& data) {
   char buffer[1024] = {0};
   osc::OutboundPacketStream p(buffer, sizeof(buffer) - 1);
 
-  p << osc::BeginBundleImmediate << osc::BeginMessage("/test") << 123 << 456.789f << "hello" << osc::EndMessage << osc::EndBundle;
+  p << osc::BeginBundleImmediate << osc::BeginMessage("/scent") << data.c_str() << osc::EndMessage << osc::EndBundle;
   transmitSocket.Send(p.Data(), p.Size());
 
   std::cout << "[OscSession] Data sent: " << data << std::endl;
@@ -85,7 +84,7 @@ bool OscSession::SendData(unsigned int data) {
     return false;
   }
 
-  std::cout << "[OscSession] Data sent: " << data << std::endl;
+  std::cout << "[OscSession] This function does nothing." << data << std::endl;
   return false;
 }
 
@@ -104,26 +103,17 @@ void OscSession::ThreadFunc() {
   std::string result = "";
 
   while (t_flag_) {
-    if (!t_scent_._Equal("")) {
-      if (!this->SendData(t_scent_)) {
+    if (!t_cmd_._Equal("")) {
+      if (!this->SendData(t_cmd_)) {
         std::cerr << "[OscSession] Failed to send." << std::endl;
       }
       if (!this->RecvData(result)) {
         std::cerr << "[OscSession] Failed to receive." << std::endl;
       }
+      t_cmd_ = "";  // Set "" in a case of Scent.
     }
 
-    if (!t_fan_._Equal("")) {
-      if (!this->SendData(t_fan_)) {
-        std::cerr << "[OscSession] Failed to send." << std::endl;
-      }
-      if (!this->RecvData(result)) {
-        std::cerr << "[OscSession] Failed to receive." << std::endl;
-      }
-      t_fan_ = "";  // Set "" in a case of FAN.
-    }
-
-    std::this_thread::sleep_for(std::chrono::seconds(t_wait_));
+    std::this_thread::sleep_for(std::chrono::milliseconds(t_wait_));
   }
   std::cout << "[OscSession] Thread ending..." << std::endl;
 }
@@ -154,26 +144,40 @@ bool OscSession::StopThreadFunc() {
   return true;
 }
 
-bool OscSession::SetScent(const std::string& cmd, long long wait) {
+bool OscSession::SendCmd(const std::string& cmd, long long wait) {
   if (!connected_) {
     std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 
-  t_scent_ = cmd;
+  t_cmd_ = cmd;
   t_wait_ = wait;
   return true;
 }
 
-bool OscSession::SetFan(const std::string& cmd, long long wait) {
+bool OscSession::SetScent(unsigned int id, const std::string& name) {
   if (!connected_) {
     std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 
-  t_fan_ = cmd;
-  t_wait_ = wait;
+  scent[id] = name;
+  std::cout << id << ": " << scent[id] << std::endl;
   return true;
+}
+
+int OscSession::GetScent(const std::string& name) {
+  if (!connected_) {
+    std::cerr << "[OscSession] Error: Cannot get a scent, not connected to any device." << std::endl;
+    return -1;
+  }
+
+  for (int i = 0; i < sizeof(scent); i++) {
+    if (scent[i] == name) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 }  // namespace sony::olfactory_device

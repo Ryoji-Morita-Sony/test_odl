@@ -30,8 +30,8 @@ UartSession::UartSession()
   : uart_handle_(INVALID_HANDLE_VALUE),
     connected_(false),
     t_flag_(false),
-    t_wait_(THREAD_SCENT_WAIT),
-    t_scent_("") {}
+    t_wait_(THREAD_WAIT),
+    t_cmd_("") {}
 
 // Destructor
 UartSession::~UartSession() {
@@ -180,26 +180,17 @@ void UartSession::ThreadFunc() {
   std::string result = "";
 
   while (t_flag_) {
-    if (!t_scent_._Equal("")) {
-      if (!this->SendData(t_scent_)) {
+    if (!t_cmd_._Equal("")) {
+      if (!this->SendData(t_cmd_)) {
         std::cerr << "[UartSession] Failed to send." << std::endl;
       }
       if (!this->RecvData(result)) {
         std::cerr << "[UartSession] Failed to receive." << std::endl;
       }
+      t_cmd_ = "";
     }
 
-    if (!t_fan_._Equal("")) {
-      if (!this->SendData(t_fan_)) {
-        std::cerr << "[UartSession] Failed to send." << std::endl;
-      }
-      if (!this->RecvData(result)) {
-        std::cerr << "[UartSession] Failed to receive." << std::endl;
-      }
-      t_fan_ = "";  // Set "" in a case of FAN.
-    }
-
-    std::this_thread::sleep_for(std::chrono::seconds(t_wait_));
+    std::this_thread::sleep_for(std::chrono::milliseconds(t_wait_));
   }
   std::cout << "[UartSession] Thread ending..." << std::endl;
 }
@@ -230,26 +221,39 @@ bool UartSession::StopThreadFunc() {
   return true;
 }
 
-bool UartSession::SetScent(const std::string& cmd, long long wait) {
+bool UartSession::SendCmd(const std::string& cmd, long long wait) {
   if (!connected_) {
     std::cerr << "[UartSession] UART not connected." << std::endl;
     return false;
   }
 
-  t_scent_ = cmd;
+  t_cmd_ = cmd;
   t_wait_ = wait;
   return true;
 }
 
-bool UartSession::SetFan(const std::string& cmd, long long wait) {
+bool UartSession::SetScent(unsigned int id, const std::string& name) {
   if (!connected_) {
-    std::cerr << "[UartSession] UART not connected." << std::endl;
+    std::cerr << "[UartSession] Error: Cannot set a scent, not connected to any device." << std::endl;
     return false;
   }
 
-  t_fan_ = cmd;
-  t_wait_ = wait;
+  scent[id] = name;
   return true;
+}
+
+int UartSession::GetScent(const std::string& name) {
+  if (!connected_) {
+    std::cerr << "[UartSession] Error: Cannot get a scent, not connected to any device." << std::endl;
+    return -1;
+  }
+
+  for (int i = 0; i < sizeof(scent); i++) {
+    if (scent[i] == name) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 }  // namespace sony::olfactory_device
