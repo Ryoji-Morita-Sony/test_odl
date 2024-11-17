@@ -172,7 +172,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
-  std::vector<std::string> vec = {"fan/0/30", "fan/1/30", "motor/0/30", "motor/1/30"};
+  std::vector<std::string> vec = {"motor(0, 30)", "motor(1, 30)"};
   CtrlDevice(device, vec);
   ParseJson(device);
 
@@ -190,7 +190,7 @@ OLFACTORY_DEVICE_API OdResult sony_odEndSession(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
-  std::vector<std::string> vec = {"fan/0/0", "fan/1/0", "motor/0/0", "motor/1/0"};
+  std::vector<std::string> vec = {"motor(0, 0)", "motor(1, 0)", "reset(0, 0)"};
   CtrlDevice(device, vec);
 
   if (!device_sessions[device]->StopThreadFunc()) {
@@ -225,12 +225,16 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
   // Send the command to start scent emission
   std::string name(scent_name);
   int no = device_sessions[device]->GetScent(name);
+  if (no == -1) {
+    spdlog::error("Incorrect scent.", device_id);
+    return OdResult::ERROR_UNKNOWN;
+  }
   std::string s_no = std::to_string(no);
 
   int i_level = static_cast<int>(level * 10);
   std::string s_level = std::to_string(i_level);
 
-  std::string command = "release/" + s_no + "/" + s_level;
+  std::string command = "release(" + s_no + ", " + s_level + ")";
   //  long long wait = static_cast<long long>(i_level + THREAD_WAIT);
   if (!device_sessions[device]->SendCmd(command, THREAD_WAIT)) {
     spdlog::error("Failed to set SCENT.");
@@ -251,7 +255,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
-  std::vector<std::string> vec = {"release/0/0", "release/1/0", "release/2/0", "release/3/0"};
+  std::vector<std::string> vec = {"release(0, 0)", "release(1, 0)", "release(2, 0)", "release(3, 0)"};
   CtrlDevice(device, vec);
 
   spdlog::debug("{} completed.", __func__);

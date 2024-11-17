@@ -22,6 +22,8 @@
 
 #include <iostream>
 #include <iomanip> // for std::setw, std::setfill
+#include <vector>
+#include <sstream>
 
 namespace sony::olfactory_device {
 
@@ -71,10 +73,24 @@ bool OscSession::SendData(const std::string& data) {
   char buffer[1024] = {0};
   osc::OutboundPacketStream p(buffer, sizeof(buffer) - 1);
 
-  p << osc::BeginBundleImmediate << osc::BeginMessage("/scent") << data.c_str() << osc::EndMessage << osc::EndBundle;
+//  p << osc::BeginBundleImmediate << osc::BeginMessage("/scent") << data.c_str() << osc::EndMessage << osc::EndBundle;
+  size_t start = data.find('(');
+  size_t end = data.find(')');
+  std::string command = data.substr(0, start);
+  std::string arguments = data.substr(start + 1, end - start - 1);
+  std::istringstream iss(arguments);
+  std::string arg;
+  std::vector<std::string> args;
+  while (std::getline(iss, arg, ',')) {
+    args.push_back(arg);
+  }
+  int target = std::stoi(args[0]);
+  int level = std::stoi(args[1]);
+
+  p << osc::BeginBundleImmediate << osc::BeginMessage("/scent") << command.c_str() << target << level << osc::EndMessage << osc::EndBundle;
   transmitSocket.Send(p.Data(), p.Size());
 
-  std::cout << "[OscSession] Data sent: " << data << std::endl;
+  std::cout << "[OscSession] Data sent: " << command << "/" << target << "/" << level << std::endl;
   return true;
 }
 
