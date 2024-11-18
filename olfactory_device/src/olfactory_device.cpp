@@ -52,6 +52,10 @@ using SessionType = UartSession;
 using SessionType = OscSession;
 #endif
 
+// Uncomment to be enabled Thread
+//#define ENABLED_THREAD
+
+
 #define FILE_DEVICE_JSON ("C:\\VisualStudioProjects\\device.json")
 
 // Map to manage DeviceSessionIF instances by device_id
@@ -167,10 +171,12 @@ OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
+#ifdef ENABLED_THREAD
   if (!device_sessions[device]->StartThreadFunc()) {
     spdlog::error("Failed to start thread.");
     return OdResult::ERROR_UNKNOWN;
   }
+#endif
 
   std::vector<std::string> vec = {"motor(0, 30)", "motor(1, 30)"};
   CtrlDevice(device, vec);
@@ -190,13 +196,16 @@ OLFACTORY_DEVICE_API OdResult sony_odEndSession(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
-  std::vector<std::string> vec = {"motor(0, 0)", "motor(1, 0)", "reset(0, 0)"};
+//  std::vector<std::string> vec = {"motor(0, 0)", "motor(1, 0)", "reset(0, 0)"};
+  std::vector<std::string> vec = {"motor(0, 0)", "motor(1, 0)"};
   CtrlDevice(device, vec);
 
+#ifdef ENABLED_THREAD
   if (!device_sessions[device]->StopThreadFunc()) {
     spdlog::error("Failed to stop thread.");
     return OdResult::ERROR_UNKNOWN;
   }
+#endif
 
   // Close the session and remove it from the map
   device_sessions[device]->Close();

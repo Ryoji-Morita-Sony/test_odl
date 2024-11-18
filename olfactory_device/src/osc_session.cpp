@@ -25,6 +25,10 @@
 #include <vector>
 #include <sstream>
 
+// Uncomment to be enabled Thread
+//#define ENABLED_THREAD
+
+
 namespace sony::olfactory_device {
 
 // Constructor
@@ -166,8 +170,14 @@ bool OscSession::SendCmd(const std::string& cmd, long long wait) {
     return false;
   }
 
+#ifdef ENABLED_THREAD
   t_cmd_ = cmd;
   t_wait_ = wait;
+#else
+  if (!this->SendData(cmd)) {
+    std::cerr << "[OscSession] Failed to send." << std::endl;
+  }
+#endif
   return true;
 }
 
