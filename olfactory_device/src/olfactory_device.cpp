@@ -20,10 +20,15 @@
 
 #include "olfactory_device.h"
 #include "device_session_if.h"
+#include "picojson.h"
 #include "uart_session.h"
 #include "stub_session.h"
 #include "osc_session.h"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 #include <unordered_map>
 #include <iomanip> // for std::setw, std::setfill
 #include <string>
@@ -36,7 +41,7 @@
 namespace sony::olfactory_device {
 
 // Uncomment to use the StubSession for testing
-#define USE_STUB_SESSION
+//#define USE_STUB_SESSION
 //#define USE_UART_SESSION
 
 #ifdef USE_STUB_SESSION
@@ -46,6 +51,12 @@ using SessionType = UartSession;
 #else
 using SessionType = OscSession;
 #endif
+
+// Uncomment to be enabled Thread
+//#define ENABLED_THREAD
+
+
+#define FILE_DEVICE_JSON ("C:\\VisualStudioProjects\\device.json")
 
 // Map to manage DeviceSessionIF instances by device_id
 static std::unordered_map<std::string, std::unique_ptr<DeviceSessionIF>> device_sessions;
@@ -80,6 +91,66 @@ OLFACTORY_DEVICE_API OdResult sony_odRegisterLogCallback(OdLogCallback callback)
   return OdResult::SUCCESS;
 }
 
+static OdResult ParseJson(std::string device_ip) {
+// JSON list
+  std::ifstream inputFile(FILE_DEVICE_JSON);
+  if (!inputFile) {
+    std::cerr << "Failed to open device.json." << std::endl;
+    return OdResult::ERROR_UNKNOWN;
+  }
+  std::stringstream buffer;
+  buffer << inputFile.rdbuf();
+  std::string json = buffer.str();
+//  std::cout << json << std::endl;
+
+// Parse JSON
+  picojson::value v;
+  std::string err = picojson::parse(v, json);
+  if (!err.empty()) {
+    std::cerr << "Parse error: " << err << std::endl;
+    return OdResult::ERROR_UNKNOWN;
+  }
+
+  // Get device key
+  const picojson::array& devices = v.get<picojson::object>()["device"].get<picojson::array>();
+
+  // Get each info
+  for (const auto& device : devices) {
+      const picojson::object& obj = device.get<picojson::object>();
+      std::string ip = obj.at("ip").get<std::string>();
+      if (ip == device_ip) {
+        std::cout << "[olfactory_device] IP: " << ip << std::endl;
+
+        // Get scent list
+        const picojson::array& scents = obj.at("scent").get<picojson::array>();
+
+        unsigned int cnt = 0;
+        for (const auto& scent : scents) {
+          device_sessions[device_ip]->SetScent(cnt, scent.get<std::string>());
+            cnt++;
+        }
+        std::cout << "[olfactory_device] Scents: ";
+        for (const auto& scent : scents) {
+          std::cout << scent << ", ";
+        }
+        std::cout << std::endl;
+      }
+  }
+
+  return OdResult::SUCCESS;
+}
+
+static OdResult CtrlDevice(std::string device, std::vector<std::string> vec) {
+  for (const auto& cmd : vec) {
+    if (!device_sessions[device]->SendCmd(cmd, THREAD_WAIT)) {
+      std::cerr << "Failed to send a command." << std::endl;
+      return OdResult::ERROR_UNKNOWN;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
+  return OdResult::SUCCESS;
+}
+
 OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id) {
   spdlog::debug("{} called.", __func__);
   std::string device(device_id);
@@ -100,15 +171,16 @@ OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
+#ifdef ENABLED_THREAD
   if (!device_sessions[device]->StartThreadFunc()) {
     spdlog::error("Failed to start thread.");
     return OdResult::ERROR_UNKNOWN;
   }
+#endif
 
-//  if (!device_sessions[device]->SetFan("fan(1, 30)", 1)) {
-//    std::cerr << "Failed to set FAN." << std::endl;
-//    return OdResult::ERROR_UNKNOWN;
-//  }
+  std::vector<std::string> vec = {"motor(0, 30)", "motor(1, 30)"};
+  CtrlDevice(device, vec);
+  ParseJson(device);
 
   spdlog::debug("{} completed.", __func__);
   return OdResult::SUCCESS;
@@ -124,15 +196,16 @@ OLFACTORY_DEVICE_API OdResult sony_odEndSession(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
-//  if (!device_sessions[device]->SetFan("fan(1, 0)", 1)) {
-//    std::cerr << "Failed to set FAN." << std::endl;
-//    return OdResult::ERROR_UNKNOWN;
-//  }
+//  std::vector<std::string> vec = {"motor(0, 0)", "motor(1, 0)", "reset(0, 0)"};
+  std::vector<std::string> vec = {"motor(0, 0)", "motor(1, 0)"};
+  CtrlDevice(device, vec);
 
+#ifdef ENABLED_THREAD
   if (!device_sessions[device]->StopThreadFunc()) {
     spdlog::error("Failed to stop thread.");
     return OdResult::ERROR_UNKNOWN;
   }
+#endif
 
   // Close the session and remove it from the map
   device_sessions[device]->Close();
@@ -159,13 +232,20 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
   }
 
   // Send the command to start scent emission
-  std::string s_scent(scent_name);
+  std::string name(scent_name);
+  int no = device_sessions[device]->GetScent(name);
+  if (no == -1) {
+    spdlog::error("Incorrect scent.", device_id);
+    return OdResult::ERROR_UNKNOWN;
+  }
+  std::string s_no = std::to_string(no);
+
   int i_level = static_cast<int>(level * 10);
   std::string s_level = std::to_string(i_level);
 
-  std::string command = "release(" + s_scent + ", " + s_level + ")";
-  long long wait = static_cast<long long>(i_level + THREAD_SCENT_WAIT);
-  if (!device_sessions[device]->SetScent(command, wait)) {
+  std::string command = "release(" + s_no + ", " + s_level + ")";
+  //  long long wait = static_cast<long long>(i_level + THREAD_WAIT);
+  if (!device_sessions[device]->SendCmd(command, THREAD_WAIT)) {
     spdlog::error("Failed to set SCENT.");
     return OdResult::ERROR_UNKNOWN;
   }
@@ -184,13 +264,8 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
-  // Send the command to start scent emission
-  std::string command = "";
-  long long wait = THREAD_SCENT_WAIT;
-  if (!device_sessions[device]->SetScent(command, wait)) {
-    spdlog::error("Failed to set SCENT.");
-    return OdResult::ERROR_UNKNOWN;
-  }
+  std::vector<std::string> vec = {"release(0, 0)", "release(1, 0)", "release(2, 0)", "release(3, 0)"};
+  CtrlDevice(device, vec);
 
   spdlog::debug("{} completed.", __func__);
   return OdResult::SUCCESS;

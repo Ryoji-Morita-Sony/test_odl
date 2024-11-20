@@ -22,6 +22,12 @@
 
 #include <iostream>
 #include <iomanip> // for std::setw, std::setfill
+#include <vector>
+#include <sstream>
+
+// Uncomment to be enabled Thread
+//#define ENABLED_THREAD
+
 
 namespace sony::olfactory_device {
 
@@ -31,9 +37,8 @@ OscSession::OscSession()
       osc_port_(OSC_PORT),
       connected_(false),
       t_flag_(false),
-      t_wait_(THREAD_SCENT_WAIT),
-      t_scent_(""),
-      t_fan_("") {}
+      t_wait_(THREAD_WAIT),
+      t_cmd_("") {}
 
 // Destructor
 OscSession::~OscSession() {
@@ -72,10 +77,24 @@ bool OscSession::SendData(const std::string& data) {
   char buffer[1024] = {0};
   osc::OutboundPacketStream p(buffer, sizeof(buffer) - 1);
 
-  p << osc::BeginBundleImmediate << osc::BeginMessage("/test") << 123 << 456.789f << "hello" << osc::EndMessage << osc::EndBundle;
+//  p << osc::BeginBundleImmediate << osc::BeginMessage("/scent") << data.c_str() << osc::EndMessage << osc::EndBundle;
+  size_t start = data.find('(');
+  size_t end = data.find(')');
+  std::string command = data.substr(0, start);
+  std::string arguments = data.substr(start + 1, end - start - 1);
+  std::istringstream iss(arguments);
+  std::string arg;
+  std::vector<std::string> args;
+  while (std::getline(iss, arg, ',')) {
+    args.push_back(arg);
+  }
+  int target = std::stoi(args[0]);
+  int level = std::stoi(args[1]);
+
+  p << osc::BeginBundleImmediate << osc::BeginMessage("/scent") << command.c_str() << target << level << osc::EndMessage << osc::EndBundle;
   transmitSocket.Send(p.Data(), p.Size());
 
-  std::cout << "[OscSession] Data sent: " << data << std::endl;
+  std::cout << "[OscSession] Data sent: " << command << "/" << target << "/" << level << std::endl;
   return true;
 }
 
@@ -85,7 +104,7 @@ bool OscSession::SendData(unsigned int data) {
     return false;
   }
 
-  std::cout << "[OscSession] Data sent: " << data << std::endl;
+  std::cout << "[OscSession] This function does nothing." << data << std::endl;
   return false;
 }
 
@@ -104,26 +123,17 @@ void OscSession::ThreadFunc() {
   std::string result = "";
 
   while (t_flag_) {
-    if (!t_scent_._Equal("")) {
-      if (!this->SendData(t_scent_)) {
+    if (!t_cmd_._Equal("")) {
+      if (!this->SendData(t_cmd_)) {
         std::cerr << "[OscSession] Failed to send." << std::endl;
       }
       if (!this->RecvData(result)) {
         std::cerr << "[OscSession] Failed to receive." << std::endl;
       }
+      t_cmd_ = "";  // Set "" in a case of Scent.
     }
 
-    if (!t_fan_._Equal("")) {
-      if (!this->SendData(t_fan_)) {
-        std::cerr << "[OscSession] Failed to send." << std::endl;
-      }
-      if (!this->RecvData(result)) {
-        std::cerr << "[OscSession] Failed to receive." << std::endl;
-      }
-      t_fan_ = "";  // Set "" in a case of FAN.
-    }
-
-    std::this_thread::sleep_for(std::chrono::seconds(t_wait_));
+    std::this_thread::sleep_for(std::chrono::milliseconds(t_wait_));
   }
   std::cout << "[OscSession] Thread ending..." << std::endl;
 }
@@ -154,26 +164,46 @@ bool OscSession::StopThreadFunc() {
   return true;
 }
 
-bool OscSession::SetScent(const std::string& cmd, long long wait) {
+bool OscSession::SendCmd(const std::string& cmd, long long wait) {
   if (!connected_) {
     std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 
-  t_scent_ = cmd;
+#ifdef ENABLED_THREAD
+  t_cmd_ = cmd;
   t_wait_ = wait;
+#else
+  if (!this->SendData(cmd)) {
+    std::cerr << "[OscSession] Failed to send." << std::endl;
+  }
+#endif
   return true;
 }
 
-bool OscSession::SetFan(const std::string& cmd, long long wait) {
+bool OscSession::SetScent(unsigned int id, const std::string& name) {
   if (!connected_) {
     std::cerr << "[OscSession] OSC not connected." << std::endl;
     return false;
   }
 
-  t_fan_ = cmd;
-  t_wait_ = wait;
+  scent[id] = name;
+  std::cout << id << ": " << scent[id] << std::endl;
   return true;
+}
+
+int OscSession::GetScent(const std::string& name) {
+  if (!connected_) {
+    std::cerr << "[OscSession] Error: Cannot get a scent, not connected to any device." << std::endl;
+    return -1;
+  }
+
+  for (int i = 0; i < sizeof(scent); i++) {
+    if (scent[i] == name) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 }  // namespace sony::olfactory_device

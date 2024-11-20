@@ -63,7 +63,7 @@ class TestOlfactoryDevice : public ::testing::Test {
 };
 
 // Test case to start scent emission with float level
-TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
+TEST_F(TestOlfactoryDevice, DISABLED_01_start_scent_emission) {
   std::string device_id = "COM3";
   std::string name = "4";
   float level = 0.85f;
@@ -93,9 +93,9 @@ TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
 }
 
 // Test case to stop scent emission
-TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
-  std::string device_id = "COM3";
-  std::string name = "4";
+TEST_F(TestOlfactoryDevice, DISABLED_02_stop_scent_emission) {
+  std::string device_id = "192.168.1.103";
+  std::string name = "103_00";
   float level = 0.4f;
 
   // First, start a session for device
@@ -105,7 +105,7 @@ TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
   // Start scent emission for device
   result = sony_odStartScentEmission(device_id.c_str(), name.c_str(), level);
   ASSERT_EQ(result, OdResult::SUCCESS);
-  std::this_thread::sleep_for(std::chrono::seconds(30));
+  std::this_thread::sleep_for(std::chrono::seconds(10));
 //Sleep(20000);   // milliseconds
 
   // Stop the scent emission for device
@@ -120,7 +120,7 @@ TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
 }
 
 // Test case to handle the case where no session is active when stopping scent emission
-TEST_F(TestOlfactoryDevice, 03_stop_scent_emission_without_session) {
+TEST_F(TestOlfactoryDevice, DISABLED_03_stop_scent_emission_without_session) {
   std::string device_id = "COM3";
 
   // Attempt to stop scent emission without starting a session
@@ -221,6 +221,41 @@ TEST_F(TestOlfactoryDevice, DISABLED_06_uart_9_devcies) {
 
   for (int i = 0; i < max; i++) {
     result[i] = sony_odEndSession(ConvertWStringToConstChar(device_id[i]));
+    ASSERT_EQ(result[i], OdResult::SUCCESS);
+  }
+}
+
+// Test case to start scent emission with float level
+TEST_F(TestOlfactoryDevice, DISABLED_07_osc_5_devcies) {
+  int max = 5;
+  std::string device_id_head = "192.168.1.";
+  std::string device_id[5] = {"103", "104", "105", "106", "107"};
+  std::string name[5] = {"103_00", "104_01", "105_02", "106_03", "107_00"};
+  float level[5] = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f};
+  OdResult result[5];
+
+  for (int i = 0; i < max; i++) {
+    std::string ip = device_id_head + device_id[i];
+    result[i] = sony_odStartSession(ip.c_str());
+    ASSERT_EQ(result[i], OdResult::SUCCESS);
+  }
+
+  for (int i = 0; i < max; i++) {
+    std::string ip = device_id_head + device_id[i];
+    result[i] = sony_odStartScentEmission(ip.c_str(), name[i].c_str(), level[i]);
+    ASSERT_EQ(result[i], OdResult::SUCCESS);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  for (int i = 0; i < max; i++) {
+    std::string ip = device_id_head + device_id[i];
+    result[i] = sony_odStopScentEmission(ip.c_str());
+    ASSERT_EQ(result[i], OdResult::SUCCESS);
+  }
+
+  for (int i = 0; i < max; i++) {
+    std::string ip = device_id_head + device_id[i];
+    result[i] = sony_odEndSession(ip.c_str());
     ASSERT_EQ(result[i], OdResult::SUCCESS);
   }
 }

@@ -20,6 +20,7 @@
 
 #include "stub_session.h"
 
+#include <iostream>
 #include <iomanip> // for std::setw, std::setfill
 
 // Third Party Libraries
@@ -32,9 +33,8 @@ StubSession::StubSession()
     : 
       connected_(false),
       t_flag_(false),
-      t_wait_(THREAD_SCENT_WAIT),
-      t_scent_(""),
-      t_fan_("") {}
+      t_wait_(THREAD_WAIT),
+      t_cmd_("") {}
 
 // Destructor
 StubSession::~StubSession() {
@@ -107,26 +107,17 @@ void StubSession::ThreadFunc() {
   std::string result = "";
 
   while (t_flag_) {
-    if (!t_scent_._Equal("")) {
-      if (!this->SendData(t_scent_)) {
+    if (!t_cmd_._Equal("")) {
+      if (!this->SendData(t_cmd_)) {
         spdlog::error("[StubSession] Failed to send.");
       }
       if (!this->RecvData(result)) {
         spdlog::error("[StubSession] Failed to receive.");
       }
+      t_cmd_ = "";
     }
 
-    if (!t_fan_._Equal("")) {
-      if (!this->SendData(t_fan_)) {
-        spdlog::error("[StubSession] Failed to send.");
-      }
-      if (!this->RecvData(result)) {
-        spdlog::error("[StubSession] Failed to receive.");
-      }
-      t_fan_ = "";  // Set "" in a case of FAN.
-    }
-
-    std::this_thread::sleep_for(std::chrono::seconds(t_wait_));
+    std::this_thread::sleep_for(std::chrono::milliseconds(t_wait_));
   }
   spdlog::debug("[StubSession] Thread ending...");
 }
@@ -157,26 +148,39 @@ bool StubSession::StopThreadFunc() {
   return true;
 }
 
-bool StubSession::SetScent(const std::string& cmd, long long wait) {
+bool StubSession::SendCmd(const std::string& cmd, long long wait) {
   if (!connected_) {
-    spdlog::error("[StubSession] Error: Cannot set a scent-command, not connected to any device.");
+    spdlog::error("[StubSession] Error: Cannot send a command, not connected to any device.");
     return false;
   }
 
-  t_scent_ = cmd;
+  t_cmd_ = cmd;
   t_wait_ = wait;
   return true;
 }
 
-bool StubSession::SetFan(const std::string& cmd, long long wait) {
+bool StubSession::SetScent(unsigned int id, const std::string& name) {
   if (!connected_) {
-    spdlog::error("[StubSession] Error: Cannot set a fan-command, not connected to any device.");
+    spdlog::error("[StubSession] Error: Cannot set a scent, not connected to any device.");
     return false;
   }
 
-  t_fan_ = cmd;
-  t_wait_ = wait;
+  scent[id] = name;
   return true;
+}
+
+int StubSession::GetScent(const std::string& name) {
+  if (!connected_) {
+    spdlog::error("[StubSession] Error: Cannot get a scent, not connected to any device.");
+    return -1;
+  }
+
+  for (int i = 0; i < sizeof(scent); i++) {
+    if (scent[i] == name) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 }  // namespace sony::olfactory_device

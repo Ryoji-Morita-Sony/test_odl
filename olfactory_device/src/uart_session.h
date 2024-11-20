@@ -26,7 +26,7 @@
 #include <atomic>
 #include <queue>
 
-#define THREAD_SCENT_WAIT (6)
+#define THREAD_WAIT (200)
 
 namespace sony::olfactory_device {
 
@@ -43,9 +43,10 @@ class UartSession : public DeviceSessionIF {
 
   std::thread       t_;       // Thread parameter.
   std::atomic<bool> t_flag_;  // Flag for thread loop.
-  long long         t_wait_;  // Time waiting in thread loop, seconds.
-  std::string       t_scent_; // Scent command to send in thread loop.
-  std::string       t_fan_;   // Fan command to send in thread loop.
+  long long         t_wait_;  // Time waiting in thread loop, milliseconds.
+  std::string       t_cmd_;   // A command to send in thread loop.
+
+  std::string       scent[4]; // scent devices
 
  public:
   UartSession();
@@ -112,22 +113,30 @@ class UartSession : public DeviceSessionIF {
   bool StopThreadFunc() override;
 
   /**
-   * @brief Set a scent command like "release(4, 10)".
+   * @brief Send a command like "release(0, 10)", "fan(1, 50)", "motor(1, 50)".
    *
-   * @param cmd Scent command.
-   * @param wait Seconds waiting in thread loop.
+   * @param cmd A command.
+   * @param wait Milliseconds waiting in thread loop.
    * @return Returns true if the session is connected, false otherwise.
    */
-  bool SetScent(const std::string& cmd, long long wait) override;
+  bool SendCmd(const std::string& cmd, long long wait) override;
 
   /**
-   * @brief Set a fan command like "fan(1, 50)".
+   * @brief Set ID and scent-name like "rose", "lavender".
    *
-   * @param cmd Fan command.
-   * @param wait Seconds waiting in thread loop.
-   * @return Returns true if the session is connected, false otherwise.
+   * @param id ID of SMA device. (0 ~ 3)
+   * @param name Name of scent.
+   * @return Returns true if it succeeded, false otherwise.
    */
-  bool SetFan(const std::string& cmd, long long wait) override;
+  bool SetScent(unsigned int id, const std::string& name) override;
+
+  /**
+   * @brief Get ID from scent-name.
+   *
+   * @param name Name of scent.
+   * @return Returns id (0 ~ 3), -1 if nothing.
+   */
+  int GetScent(const std::string& name) override;
 
 };
 

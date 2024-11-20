@@ -101,23 +101,30 @@ class DeviceSessionIF {
   virtual bool StopThreadFunc() = 0;
 
   /**
-   * @brief Set a scent command like "release(4, 10)".
+   * @brief Send a command like "release(0, 10)", "fan(1, 50)", "motor(1, 50)".
    *
-   * @param cmd Scent command.
-   * @param wait Seconds waiting in thread loop.
+   * @param cmd A command.
+   * @param wait Milliseconds waiting in thread loop.
    * @return Returns true if it succeeded, false otherwise.
    */
-  virtual bool SetScent(const std::string& cmd, long long wait) = 0;
+  virtual bool SendCmd(const std::string& cmd, long long wait) = 0;
 
   /**
-   * @brief Set a fan command like "fan(1, 50)".
+   * @brief Set ID and scent-name like "rose", "lavender".
    *
-   * @param cmd Fan command.
-   * @param wait Seconds waiting in thread loop.
+   * @param id ID of SMA device. (0 ~ 3)
+   * @param name Name of scent.
    * @return Returns true if it succeeded, false otherwise.
    */
-  virtual bool SetFan(const std::string& cmd, long long wait) = 0;
+  virtual bool SetScent(unsigned int id, const std::string& name) = 0;
 
+  /**
+   * @brief Get ID from scent-name.
+   *
+   * @param name Name of scent.
+   * @return Returns id (0 ~ 3), -1 if nothing.
+   */
+  virtual int GetScent(const std::string& name) = 0;
 };
 
 }  // namespace sony::olfactory_device
