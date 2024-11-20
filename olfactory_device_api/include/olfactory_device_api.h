@@ -76,7 +76,7 @@ OdResult SetScentOrientation(
  * @param[out] is_available A boolean flag set to true if scent emission is available, false otherwise
  * @return OdResult Returns SUCCESS if the scent emission starts successfully, otherwise ERROR_UNKNOWN
  */
-OdResult StartScentEmission(const char* device_id, const char* scent_name, float duration, bool is_available);
+OdResult StartScentEmission(const char* device_id, const char* scent_name, float duration, bool& is_available);
 
 /**
  * @brief Stop scent emission for the specified device.

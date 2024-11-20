@@ -47,6 +47,9 @@ using SessionType = UartSession;
 using SessionType = OscSession;
 #endif
 
+// Disable following by final version release.
+#define v0_2_3_TEMP
+
 // Map to manage DeviceSessionIF instances by device_id
 static std::unordered_map<std::string, std::unique_ptr<DeviceSessionIF>> device_sessions;
 
@@ -148,10 +151,16 @@ OLFACTORY_DEVICE_API OdResult sony_odSetScentOrientation(const char* device_id, 
   return OdResult::ERROR_FUNCTION_UNSUPPORTED;
 }
 
+#ifdef v0_2_3_TEMP // Disable followings for v0.2.3 release.
+// Map to track the next available time for each device
+std::unordered_map<std::string, std::chrono::steady_clock::time_point> device_next_available_time;
+#endif // v0_2_3_TEMP
+
 OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, const char* scent_name,
                                                         float duration, bool& is_available) {
   spdlog::debug("{} called.", __func__);
   std::string device(device_id);
+  is_available = false;
 
   // Check if a session is active for the given device_id
   if (device_sessions.find(device) == device_sessions.end() || !device_sessions[device]->IsConnected()) {
@@ -159,6 +168,28 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
     return OdResult::ERROR_UNKNOWN;
   }
 
+#ifdef v0_2_3_TEMP // Disable followings for v0.2.3 release.
+  // Get the current time
+  auto now = std::chrono::steady_clock::now();
+
+  // Check the last start time for the given device
+  auto it = device_next_available_time.find(device);
+  if (it != device_next_available_time.end()) {
+    if (now < it->second) {
+      // Device is still unavailable
+      is_available = false;
+      return OdResult::SUCCESS;
+    }
+  }
+
+  // Update the next available time for the device
+  device_next_available_time[device] =
+      now + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                std::chrono::duration<float>(duration * 1.6f));
+
+  // Set is_available to true and return success
+  is_available = true;
+#else  // v0_2_3_TEMP
   // Send the command to start scent emission
   std::string s_scent(scent_name);
   int i_level = static_cast<int>(duration * 10);
@@ -170,6 +201,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
     spdlog::error("Failed to set SCENT.");
     return OdResult::ERROR_UNKNOWN;
   }
+#endif // v0_2_3_TEMP
 
   spdlog::debug("{} completed.", __func__);
   return OdResult::SUCCESS;
@@ -185,6 +217,17 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
+#ifdef v0_2_3_TEMP  // Disable followings for v0.2.4 release.
+  // Check if the device has an active start time
+  auto it = device_next_available_time.find(device);
+  if (it == device_next_available_time.end()) {
+    // No active emission found
+    return OdResult::ERROR_UNKNOWN;
+  }
+
+  // Remove the device from the map, effectively stopping the emission
+  device_next_available_time.erase(it);
+#else  // v0_2_3_TEMP
   // Send the command to start scent emission
   std::string command = "";
   long long wait = THREAD_SCENT_WAIT;
@@ -192,6 +235,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
     spdlog::error("Failed to set SCENT.");
     return OdResult::ERROR_UNKNOWN;
   }
+#endif // v0_2_3_TEMP
 
   spdlog::debug("{} completed.", __func__);
   return OdResult::SUCCESS;
@@ -207,8 +251,26 @@ OLFACTORY_DEVICE_API OdResult sony_odIsScentEmissionAvailable(const char* device
     return OdResult::ERROR_UNKNOWN;
   }
 
+#ifdef v0_2_3_TEMP // Disable followings for v0.2.4 release.
+  // Get the current time
+  auto now = std::chrono::steady_clock::now();
+
+  // Check the last start time for the given device
+  auto it = device_next_available_time.find(device);
+  if (it != device_next_available_time.end()) {
+    if (now < it->second) {
+      // Device is still unavailable
+      is_available = false;
+      return OdResult::SUCCESS;
+    }
+  }
+
+  // Set is_available to true and return success
+  is_available = true;
+#else // v0_2_3_TEMP
   // Check if scent emission is available
   is_available = device_sessions[device]->IsScentEmissionAvailable();
+#endif // v0_2_3_TEMP
 
   spdlog::debug("{} completed.", __func__);
   return OdResult::SUCCESS;

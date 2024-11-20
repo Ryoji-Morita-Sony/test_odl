@@ -168,7 +168,7 @@ OdResult EndSession(const char* device_id) {
   return sony_odEndSession(device_id);
 }
 
-OdResult StartScentEmission(const char* device_id, const char* scent_name, float duration, bool is_available) {
+OdResult StartScentEmission(const char* device_id, const char* scent_name, float duration, bool& is_available) {
   if (!IsRuntimeLibraryValid()) {
     return OdResult::ERROR_LIBRARY_NOT_FOUND;
   }
