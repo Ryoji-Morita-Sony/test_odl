@@ -54,7 +54,7 @@ bool StubSession::Open(const char* device_id) {
 void StubSession::Close() {
   if (connected_) {
     // Log the action of closing the session
-    //spdlog::debug("[StubSession] Close called.");
+    spdlog::debug("[StubSession] Close called.");
 
     connected_ = false;  // Simulate closing the connection
   }
