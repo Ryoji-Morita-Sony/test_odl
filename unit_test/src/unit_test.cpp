@@ -81,7 +81,8 @@ TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   // Then, start scent emission for device with scent and level
-  result = sony_odStartScentEmission(device_id.c_str(), name.c_str(), level);
+  bool b_is_available = false;
+  result = sony_odStartScentEmission(device_id.c_str(), name.c_str(), level, b_is_available);
   ASSERT_EQ(result, OdResult::SUCCESS);
 
   // wait
@@ -103,7 +104,8 @@ TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
   ASSERT_EQ(result, OdResult::SUCCESS);
 
   // Start scent emission for device
-  result = sony_odStartScentEmission(device_id.c_str(), name.c_str(), level);
+  bool b_is_available = false;
+  result = sony_odStartScentEmission(device_id.c_str(), name.c_str(), level, b_is_available);
   ASSERT_EQ(result, OdResult::SUCCESS);
   std::this_thread::sleep_for(std::chrono::seconds(30));
 //Sleep(20000);   // milliseconds
@@ -207,8 +209,9 @@ TEST_F(TestOlfactoryDevice, DISABLED_06_uart_9_devcies) {
 
   while(true) {
     for (int i = 0; i < max; i++) {
-      result[i] =
-          sony_odStartScentEmission(ConvertWStringToConstChar(device_id[i]), name[i].c_str(), level[i]);
+      bool b_is_available = false;
+      result[i] = sony_odStartScentEmission(ConvertWStringToConstChar(device_id[i]), name[i].c_str(),
+                                            level[i], b_is_available);
       ASSERT_EQ(result[i], OdResult::SUCCESS);
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

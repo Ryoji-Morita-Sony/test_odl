@@ -51,7 +51,7 @@ DLL_FUNC_DEFINE(sony_odRegisterLogCallback, OdLogCallback)
 DLL_FUNC_DEFINE(sony_odStartSession, const char*)
 DLL_FUNC_DEFINE(sony_odEndSession, const char*)
 DLL_FUNC_DEFINE(sony_odSetScentOrientation, const char*, float, float)
-DLL_FUNC_DEFINE(sony_odStartScentEmission, const char*, const char*, float)
+DLL_FUNC_DEFINE(sony_odStartScentEmission, const char*, const char*, float, bool&)
 DLL_FUNC_DEFINE(sony_odStopScentEmission, const char*)
 DLL_FUNC_DEFINE(sony_odIsScentEmissionAvailable, const char*, bool&)
 
@@ -168,7 +168,7 @@ OdResult EndSession(const char* device_id) {
   return sony_odEndSession(device_id);
 }
 
-OdResult StartScentEmission(const char* device_id, const char* scent_name, float level) {
+OdResult StartScentEmission(const char* device_id, const char* scent_name, float duration, bool is_available) {
   if (!IsRuntimeLibraryValid()) {
     return OdResult::ERROR_LIBRARY_NOT_FOUND;
   }
@@ -177,7 +177,7 @@ OdResult StartScentEmission(const char* device_id, const char* scent_name, float
     return OdResult::ERROR_FUNCTION_UNSUPPORTED;
   }
 
-  return sony_odStartScentEmission(device_id, scent_name, level);
+  return sony_odStartScentEmission(device_id, scent_name, duration, is_available);
 }
 
 OdResult StopScentEmission(const char* device_id) {

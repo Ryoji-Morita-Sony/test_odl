@@ -148,7 +148,8 @@ OLFACTORY_DEVICE_API OdResult sony_odSetScentOrientation(const char* device_id, 
   return OdResult::ERROR_FUNCTION_UNSUPPORTED;
 }
 
-OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, const char* scent_name, float level) {
+OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, const char* scent_name,
+                                                        float duration, bool& is_available) {
   spdlog::debug("{} called.", __func__);
   std::string device(device_id);
 
@@ -160,7 +161,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
 
   // Send the command to start scent emission
   std::string s_scent(scent_name);
-  int i_level = static_cast<int>(level * 10);
+  int i_level = static_cast<int>(duration * 10);
   std::string s_level = std::to_string(i_level);
 
   std::string command = "release(" + s_scent + ", " + s_level + ")";
