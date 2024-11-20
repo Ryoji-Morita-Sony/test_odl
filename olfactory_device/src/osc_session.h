@@ -135,6 +135,12 @@ class OscSession : public DeviceSessionIF {
    */
   bool SetFan(const std::string& cmd, long long wait) override;
 
+  /**
+   * @brief Check if scent emission is available for the specified device.
+   *
+   * @return Returns true if the availability check is performed successfully, otherwise false.
+   */
+  bool IsScentEmissionAvailable() override;
 };
 
 }  // namespace sony::olfactory_device

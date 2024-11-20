@@ -53,6 +53,7 @@ DLL_FUNC_DEFINE(sony_odEndSession, const char*)
 DLL_FUNC_DEFINE(sony_odSetScentOrientation, const char*, float, float)
 DLL_FUNC_DEFINE(sony_odStartScentEmission, const char*, const char*, float)
 DLL_FUNC_DEFINE(sony_odStopScentEmission, const char*)
+DLL_FUNC_DEFINE(sony_odIsScentEmissionAvailable, const char*, bool&)
 
 /** Get the installation path from a registry key */
 std::wstring GetInstallPath() {
@@ -118,6 +119,7 @@ OdResult LoadRuntimeLibrary() {
   GET_FUNCTION(sony_odSetScentOrientation);
   GET_FUNCTION(sony_odStartScentEmission);
   GET_FUNCTION(sony_odStopScentEmission);
+  GET_FUNCTION(sony_odIsScentEmissionAvailable);
 #pragma warning(pop)
 
 #undef GET_FUNCTION
@@ -188,6 +190,18 @@ OdResult StopScentEmission(const char* device_id) {
   }
 
   return sony_odStopScentEmission(device_id);
+}
+
+OdResult IsScentEmissionAvailable(const char* device_id, bool& is_avaiable) {
+  if (!IsRuntimeLibraryValid()) {
+    return OdResult::ERROR_LIBRARY_NOT_FOUND;
+  }
+
+  if (sony_odIsScentEmissionAvailable == nullptr) {
+    return OdResult::ERROR_FUNCTION_UNSUPPORTED;
+  }
+
+  return sony_odIsScentEmissionAvailable(device_id, is_avaiable);
 }
 
 OdResult SetScentOrientation(const char* device_id, float yaw, float pitch) {

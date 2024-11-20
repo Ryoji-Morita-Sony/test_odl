@@ -88,4 +88,13 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
  */
 OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id);
 
+/**
+ * @brief Check if scent emission is available for the specified device.
+ * @param[in] device_id The UART port number (e.g., "COM3") representing the device
+ * @param[out] is_available A boolean flag set to true if scent emission is available, false otherwise
+ * @return OdResult Returns SUCCESS if the availability check is performed successfully, otherwise
+ * ERROR_UNKNOWN
+ */
+OLFACTORY_DEVICE_API OdResult sony_odIsScentEmissionAvailable(const char* device_id, bool& is_available);
+
 }  // namespace sony::olfactory_device

@@ -176,4 +176,8 @@ bool OscSession::SetFan(const std::string& cmd, long long wait) {
   return true;
 }
 
+bool OscSession::IsScentEmissionAvailable() {
+    return true;
+}
+
 }  // namespace sony::olfactory_device

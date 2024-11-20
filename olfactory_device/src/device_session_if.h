@@ -118,6 +118,13 @@ class DeviceSessionIF {
    */
   virtual bool SetFan(const std::string& cmd, long long wait) = 0;
 
+  /**
+   * @brief Check if scent emission is available for the specified device.
+   * 
+   * @return Returns true if the availability check is performed successfully, otherwise false.
+   */
+  virtual bool IsScentEmissionAvailable() = 0;
+
 };
 
 }  // namespace sony::olfactory_device

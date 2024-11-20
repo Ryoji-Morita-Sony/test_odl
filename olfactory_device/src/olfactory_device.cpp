@@ -196,4 +196,21 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
   return OdResult::SUCCESS;
 }
 
+OLFACTORY_DEVICE_API OdResult sony_odIsScentEmissionAvailable(const char* device_id, bool& is_available) {
+  spdlog::debug("{} called.", __func__);
+  std::string device(device_id);
+
+  // Check if a session is active for the given device_id
+  if (device_sessions.find(device) == device_sessions.end() || !device_sessions[device]->IsConnected()) {
+    spdlog::error("No active session on port: {}. Start a session first.", device_id);
+    return OdResult::ERROR_UNKNOWN;
+  }
+
+  // Check if scent emission is available
+  is_available = device_sessions[device]->IsScentEmissionAvailable();
+
+  spdlog::debug("{} completed.", __func__);
+  return OdResult::SUCCESS;
+}
+
 }  // namespace sony::olfactory_device

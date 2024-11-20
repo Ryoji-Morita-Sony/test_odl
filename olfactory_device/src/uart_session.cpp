@@ -252,4 +252,8 @@ bool UartSession::SetFan(const std::string& cmd, long long wait) {
   return true;
 }
 
+bool UartSession::IsScentEmissionAvailable() {
+  return true;
+}
+
 }  // namespace sony::olfactory_device
