@@ -65,9 +65,6 @@ class DeviceSessionIF {
    */
   virtual bool SendData(const std::string& data) = 0;
 
-  // Add any other necessary interface methods here
-  virtual bool SendData(unsigned int data) = 0;
-
   /**
    * @brief Receives data from the connected device.
    *
@@ -78,53 +75,6 @@ class DeviceSessionIF {
    * @return Returns true if the data was successfully sent, false otherwise.
    */
   virtual bool RecvData(std::string& data) = 0;
-
- private:
-  /**
-   * @brief Thread function.
-   */
-  virtual void ThreadFunc() = 0;
-
- public:
-  /**
-   * @brief Start a thread.
-   *
-   * @return Returns true if it succeeded, false otherwise.
-   */
-  virtual bool StartThreadFunc() = 0;
-
-  /**
-   * @brief Stop a thread.
-   *
-   * @return Returns true if it succeeded, false otherwise.
-   */
-  virtual bool StopThreadFunc() = 0;
-
-  /**
-   * @brief Send a command like "release(0, 10)", "fan(1, 50)", "motor(1, 50)".
-   *
-   * @param cmd A command.
-   * @param wait Milliseconds waiting in thread loop.
-   * @return Returns true if it succeeded, false otherwise.
-   */
-  virtual bool SendCmd(const std::string& cmd, long long wait) = 0;
-
-  /**
-   * @brief Set ID and scent-name like "rose", "lavender".
-   *
-   * @param id ID of SMA device. (0 ~ 3)
-   * @param name Name of scent.
-   * @return Returns true if it succeeded, false otherwise.
-   */
-  virtual bool SetScent(unsigned int id, const std::string& name) = 0;
-
-  /**
-   * @brief Get ID from scent-name.
-   *
-   * @param name Name of scent.
-   * @return Returns id (0 ~ 3), -1 if nothing.
-   */
-  virtual int GetScent(const std::string& name) = 0;
 
   /**
    * @brief Check if scent emission is available for the specified device.
