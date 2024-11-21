@@ -152,8 +152,15 @@ OLFACTORY_DEVICE_API OdResult sony_odSetScentOrientation(const char* device_id, 
 }
 
 #ifdef v0_2_3_TEMP // Disable followings for v0.2.3 release.
-// Map to track the next available time for each device
-std::unordered_map<std::string, std::chrono::steady_clock::time_point> device_next_available_time;
+// Struct to store emission and cooldown end times
+struct DeviceTimes {
+  std::chrono::steady_clock::time_point emission_end_time;  // End of emission
+  std::chrono::steady_clock::time_point cooldown_end_time;  // End of cooldown
+  float duration;                                           // Duration for the current emission
+};
+
+// Map to track the emission and cooldown times for each device
+std::unordered_map<std::string, DeviceTimes> device_next_available_time;
 #endif // v0_2_3_TEMP
 
 OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, const char* scent_name,
@@ -168,6 +175,9 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
     return OdResult::ERROR_UNKNOWN;
   }
 
+  // Clamp the duration to the range [0, 10]
+  duration = std::clamp(duration, 0.0f, 10.0f);
+
 #ifdef v0_2_3_TEMP // Disable followings for v0.2.3 release.
   // Get the current time
   auto now = std::chrono::steady_clock::now();
@@ -175,17 +185,22 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
   // Check the last start time for the given device
   auto it = device_next_available_time.find(device);
   if (it != device_next_available_time.end()) {
-    if (now < it->second) {
+    if (now < it->second.cooldown_end_time) {
       // Device is still unavailable
       is_available = false;
       return OdResult::SUCCESS;
     }
   }
 
-  // Update the next available time for the device
-  device_next_available_time[device] =
-      now + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-                std::chrono::duration<float>(duration * 1.6f));
+  // Calculate emission_end_time and cooldown_end_time
+  auto emission_end_time = now + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                                     std::chrono::duration<float>(duration));
+  auto cooldown_end_time =
+      emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                              std::chrono::duration<float>(duration * 0.6f));
+
+  // Update the times and duration for the device
+  device_next_available_time[device] = {emission_end_time, cooldown_end_time, duration};
 
   // Set is_available to true and return success
   is_available = true;
@@ -218,6 +233,8 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
   }
 
 #ifdef v0_2_3_TEMP  // Disable followings for v0.2.4 release.
+  auto now = std::chrono::steady_clock::now();
+
   // Check if the device has an active start time
   auto it = device_next_available_time.find(device);
   if (it == device_next_available_time.end()) {
@@ -225,8 +242,13 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
     return OdResult::ERROR_UNKNOWN;
   }
 
-  // Remove the device from the map, effectively stopping the emission
-  device_next_available_time.erase(it);
+  // Update emission_end_time to the current time
+  it->second.emission_end_time = now;
+
+  // Update cooldown_end_time to the current time + stored duration * 0.6
+  it->second.cooldown_end_time = now + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                                           std::chrono::duration<float>(it->second.duration * 0.6f));
+
 #else  // v0_2_3_TEMP
   // Send the command to start scent emission
   std::string command = "";
@@ -258,7 +280,7 @@ OLFACTORY_DEVICE_API OdResult sony_odIsScentEmissionAvailable(const char* device
   // Check the last start time for the given device
   auto it = device_next_available_time.find(device);
   if (it != device_next_available_time.end()) {
-    if (now < it->second) {
+    if (now < it->second.cooldown_end_time) {
       // Device is still unavailable
       is_available = false;
       return OdResult::SUCCESS;
