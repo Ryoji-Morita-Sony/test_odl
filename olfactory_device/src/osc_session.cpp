@@ -206,4 +206,8 @@ int OscSession::GetScent(const std::string& name) {
   return -1;
 }
 
+bool OscSession::IsScentEmissionAvailable() {
+    return true;
+}
+
 }  // namespace sony::olfactory_device

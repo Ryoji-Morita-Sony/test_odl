@@ -51,8 +51,9 @@ DLL_FUNC_DEFINE(sony_odRegisterLogCallback, OdLogCallback)
 DLL_FUNC_DEFINE(sony_odStartSession, const char*)
 DLL_FUNC_DEFINE(sony_odEndSession, const char*)
 DLL_FUNC_DEFINE(sony_odSetScentOrientation, const char*, float, float)
-DLL_FUNC_DEFINE(sony_odStartScentEmission, const char*, const char*, float)
+DLL_FUNC_DEFINE(sony_odStartScentEmission, const char*, const char*, float, bool&)
 DLL_FUNC_DEFINE(sony_odStopScentEmission, const char*)
+DLL_FUNC_DEFINE(sony_odIsScentEmissionAvailable, const char*, bool&)
 
 /** Get the installation path from a registry key */
 std::wstring GetInstallPath() {
@@ -118,6 +119,7 @@ OdResult LoadRuntimeLibrary() {
   GET_FUNCTION(sony_odSetScentOrientation);
   GET_FUNCTION(sony_odStartScentEmission);
   GET_FUNCTION(sony_odStopScentEmission);
+  GET_FUNCTION(sony_odIsScentEmissionAvailable);
 #pragma warning(pop)
 
 #undef GET_FUNCTION
@@ -166,7 +168,7 @@ OdResult EndSession(const char* device_id) {
   return sony_odEndSession(device_id);
 }
 
-OdResult StartScentEmission(const char* device_id, const char* scent_name, float level) {
+OdResult StartScentEmission(const char* device_id, const char* scent_name, float duration, bool& is_available) {
   if (!IsRuntimeLibraryValid()) {
     return OdResult::ERROR_LIBRARY_NOT_FOUND;
   }
@@ -175,7 +177,7 @@ OdResult StartScentEmission(const char* device_id, const char* scent_name, float
     return OdResult::ERROR_FUNCTION_UNSUPPORTED;
   }
 
-  return sony_odStartScentEmission(device_id, scent_name, level);
+  return sony_odStartScentEmission(device_id, scent_name, duration, is_available);
 }
 
 OdResult StopScentEmission(const char* device_id) {
@@ -188,6 +190,18 @@ OdResult StopScentEmission(const char* device_id) {
   }
 
   return sony_odStopScentEmission(device_id);
+}
+
+OdResult IsScentEmissionAvailable(const char* device_id, bool& is_avaiable) {
+  if (!IsRuntimeLibraryValid()) {
+    return OdResult::ERROR_LIBRARY_NOT_FOUND;
+  }
+
+  if (sony_odIsScentEmissionAvailable == nullptr) {
+    return OdResult::ERROR_FUNCTION_UNSUPPORTED;
+  }
+
+  return sony_odIsScentEmissionAvailable(device_id, is_avaiable);
 }
 
 OdResult SetScentOrientation(const char* device_id, float yaw, float pitch) {

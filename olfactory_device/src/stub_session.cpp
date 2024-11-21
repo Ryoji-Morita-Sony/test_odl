@@ -183,4 +183,14 @@ int StubSession::GetScent(const std::string& name) {
   return -1;
 }
 
+bool StubSession::IsScentEmissionAvailable() {
+  if (!connected_) {
+    spdlog::error("[StubSession] Error: Cannot set a fan-command, not connected to any device.");
+    return false;
+  }
+
+  spdlog::error("[StubSession] Hello World.");
+  return true;
+}
+
 }  // namespace sony::olfactory_device

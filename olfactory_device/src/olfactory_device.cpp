@@ -41,7 +41,7 @@
 namespace sony::olfactory_device {
 
 // Uncomment to use the StubSession for testing
-//#define USE_STUB_SESSION
+#define USE_STUB_SESSION
 //#define USE_UART_SESSION
 
 #ifdef USE_STUB_SESSION
@@ -221,7 +221,8 @@ OLFACTORY_DEVICE_API OdResult sony_odSetScentOrientation(const char* device_id, 
   return OdResult::ERROR_FUNCTION_UNSUPPORTED;
 }
 
-OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, const char* scent_name, float level) {
+OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, const char* scent_name,
+                                                        float duration, bool& is_available) {
   spdlog::debug("{} called.", __func__);
   std::string device(device_id);
 
@@ -240,7 +241,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
   }
   std::string s_no = std::to_string(no);
 
-  int i_level = static_cast<int>(level * 10);
+  int i_level = static_cast<int>(duration * 10);
   std::string s_level = std::to_string(i_level);
 
   std::string command = "release(" + s_no + ", " + s_level + ")";
@@ -266,6 +267,23 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
 
   std::vector<std::string> vec = {"release(0, 0)", "release(1, 0)", "release(2, 0)", "release(3, 0)"};
   CtrlDevice(device, vec);
+
+  spdlog::debug("{} completed.", __func__);
+  return OdResult::SUCCESS;
+}
+
+OLFACTORY_DEVICE_API OdResult sony_odIsScentEmissionAvailable(const char* device_id, bool& is_available) {
+  spdlog::debug("{} called.", __func__);
+  std::string device(device_id);
+
+  // Check if a session is active for the given device_id
+  if (device_sessions.find(device) == device_sessions.end() || !device_sessions[device]->IsConnected()) {
+    spdlog::error("No active session on port: {}. Start a session first.", device_id);
+    return OdResult::ERROR_UNKNOWN;
+  }
+
+  // Check if scent emission is available
+  is_available = device_sessions[device]->IsScentEmissionAvailable();
 
   spdlog::debug("{} completed.", __func__);
   return OdResult::SUCCESS;

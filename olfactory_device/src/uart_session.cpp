@@ -256,4 +256,8 @@ int UartSession::GetScent(const std::string& name) {
   return -1;
 }
 
+bool UartSession::IsScentEmissionAvailable() {
+  return true;
+}
+
 }  // namespace sony::olfactory_device
