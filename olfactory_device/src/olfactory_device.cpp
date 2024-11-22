@@ -41,7 +41,7 @@
 namespace sony::olfactory_device {
 
 // Uncomment to use the StubSession for testing
-#define USE_STUB_SESSION
+//#define USE_STUB_SESSION
 //#define USE_UART_SESSION
 
 #ifdef USE_STUB_SESSION
@@ -60,6 +60,24 @@ using SessionType = OscSession;
 
 // Map to manage DeviceSessionIF instances by device_id
 static std::unordered_map<std::string, std::unique_ptr<DeviceSessionIF>> device_sessions;
+
+// Struct to store emission and cooldown end times
+struct DeviceScent {
+  std::chrono::steady_clock::time_point emission_end_time;  // End of emission
+  std::chrono::steady_clock::time_point cooldown_end_time;  // End of cooldown
+  float duration;                                           // Duration for the current emission
+};
+
+struct DeviceTimes {
+  DeviceScent scent0;
+  DeviceScent scent1;
+  DeviceScent scent2;
+  DeviceScent scent3;
+};
+
+// Map to track the emission and cooldown times for each device
+std::unordered_map<std::string, DeviceTimes> device_next_available_time;
+
 
 // Static wrapper function to call the user-defined log callback
 static void LogCallbackWrapper(const char* message, SonyOzLogSettings_LogLevels level,
@@ -91,41 +109,6 @@ OLFACTORY_DEVICE_API OdResult sony_odRegisterLogCallback(OdLogCallback callback)
   return OdResult::SUCCESS;
 }
 
-static OdResult ParseJson(std::string device_ip) {
-// JSON list
-  std::ifstream inputFile(FILE_DEVICE_JSON);
-  if (!inputFile) {
-    std::cerr << "Failed to open device.json." << std::endl;
-    return OdResult::ERROR_UNKNOWN;
-  }
-  std::stringstream buffer;
-  buffer << inputFile.rdbuf();
-  std::string json = buffer.str();
-//  std::cout << json << std::endl;
-
-// Parse JSON
-  picojson::value v;
-  std::string err = picojson::parse(v, json);
-  if (!err.empty()) {
-    std::cerr << "Parse error: " << err << std::endl;
-    return OdResult::ERROR_UNKNOWN;
-  }
-
-  // Get device key
-  const picojson::array& devices = v.get<picojson::object>()["device"].get<picojson::array>();
-
-  // Get each info
-  for (const auto& device : devices) {
-      const picojson::object& obj = device.get<picojson::object>();
-      std::string ip = obj.at("ip").get<std::string>();
-      if (ip == device_ip) {
-        std::cout << "[olfactory_device] IP: " << ip << std::endl;
-      }
-  }
-
-  return OdResult::SUCCESS;
-}
-
 static OdResult CtrlDevice(std::string device, std::vector<std::string> vec) {
   for (const auto& cmd : vec) {
     if (!device_sessions[device]->SendData(cmd)) {
@@ -149,6 +132,8 @@ OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id) {
 
   // Emplace the new SessionType (either StubSession or UartSession)
   device_sessions.emplace(device, std::make_unique<SessionType>());
+  DeviceTimes time;
+  device_next_available_time.emplace(device, time);
 
   // Open the session for the newly created session instance
   if (!device_sessions[device]->Open(device_id)) {
@@ -159,7 +144,6 @@ OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id) {
 
   std::vector<std::string> vec = {"motor(0, 30)", "motor(1, 30)"};
   CtrlDevice(device, vec);
-  ParseJson(device);
 
   spdlog::debug("{} completed.", __func__);
   return OdResult::SUCCESS;
@@ -193,10 +177,12 @@ OLFACTORY_DEVICE_API OdResult sony_odSetScentOrientation(const char* device_id, 
   return OdResult::ERROR_FUNCTION_UNSUPPORTED;
 }
 
-OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, const char* scent_name,
-                                                        float duration, bool& is_available) {
+OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, const char* scent_name, float duration, bool& is_available) {
   spdlog::debug("{} called.", __func__);
   std::string device(device_id);
+  std::string scent(scent_name);
+  int i_device = std::stoi(device);
+  int i_scent = std::stoi(scent);
 
   // Check if a session is active for the given device_id
   if (device_sessions.find(device) == device_sessions.end() || !device_sessions[device]->IsConnected()) {
@@ -204,13 +190,91 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
     return OdResult::ERROR_UNKNOWN;
   }
 
-  // Send the command to start scent emission
-  std::string command = "release(0, 0)";
-  if (!device_sessions[device]->SendData(command)) {
-    spdlog::error("Failed to set SCENT.");
-    return OdResult::ERROR_UNKNOWN;
+  // Clamp the duration to the range [0, 10]
+  duration = std::clamp(duration, 0.0f, 10.0f);
+  // Get the current time
+  auto now = std::chrono::steady_clock::now();
+  // Check the last start time for the given device
+  auto it = device_next_available_time.find(device);
+  if (it != device_next_available_time.end()) {
+    if (i_scent == 0) {
+      if (now < it->second.scent0.cooldown_end_time) {
+        // Device is still unavailable
+        is_available = false;
+        spdlog::debug("{} Device is still unavailable.", __func__);
+        return OdResult::SUCCESS;
+      } else {
+        is_available = true;
+        std::string command = "release(0," + std::to_string(static_cast<int>(duration)) + ")";
+        if (!device_sessions[device]->SendData(command)) {
+          spdlog::error("Failed to set SCENT.");
+          return OdResult::ERROR_UNKNOWN;
+        }
+        // Calculate emission_end_time and cooldown_end_time
+        auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
+        auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
+        // Update the times and duration for the device
+        device_next_available_time[device].scent0 = {emission_end_time, cooldown_end_time, duration};
+      }
+    } else if (i_scent == 1) {
+      if (now < it->second.scent1.cooldown_end_time) {
+        // Device is still unavailable
+        is_available = false;
+        spdlog::debug("{} Device is still unavailable.", __func__);
+        return OdResult::SUCCESS;
+      } else {
+        is_available = true;
+        std::string command = "release(1," + std::to_string(static_cast<int>(duration)) + ")";
+        if (!device_sessions[device]->SendData(command)) {
+          spdlog::error("Failed to set SCENT.");
+          return OdResult::ERROR_UNKNOWN;
+        }
+        // Calculate emission_end_time and cooldown_end_time
+        auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
+        auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
+        // Update the times and duration for the device
+        device_next_available_time[device].scent1 = {emission_end_time, cooldown_end_time, duration};
+      }
+    } else if (i_scent == 2) {
+      if (now < it->second.scent2.cooldown_end_time) {
+        // Device is still unavailable
+        is_available = false;
+        spdlog::debug("{} Device is still unavailable.", __func__);
+        return OdResult::SUCCESS;
+      } else {
+        is_available = true;
+        std::string command = "release(2," + std::to_string(static_cast<int>(duration)) + ")";
+        if (!device_sessions[device]->SendData(command)) {
+          spdlog::error("Failed to set SCENT.");
+          return OdResult::ERROR_UNKNOWN;
+        }
+        // Calculate emission_end_time and cooldown_end_time
+        auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
+        auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
+        // Update the times and duration for the device
+        device_next_available_time[device].scent2 = {emission_end_time, cooldown_end_time, duration};
+      }
+    } else if (i_scent == 3) {
+      if (now < it->second.scent3.cooldown_end_time) {
+        // Device is still unavailable
+        is_available = false;
+        spdlog::debug("{} Device is still unavailable.", __func__);
+        return OdResult::SUCCESS;
+      } else {
+        is_available = true;
+        std::string command = "release(3," + std::to_string(static_cast<int>(duration)) + ")";
+        if (!device_sessions[device]->SendData(command)) {
+          spdlog::error("Failed to set SCENT.");
+          return OdResult::ERROR_UNKNOWN;
+        }
+        // Calculate emission_end_time and cooldown_end_time
+        auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
+        auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
+        // Update the times and duration for the device
+        device_next_available_time[device].scent3 = {emission_end_time, cooldown_end_time, duration};
+      }
+    }
   }
-
   spdlog::debug("{} completed.", __func__);
   return OdResult::SUCCESS;
 }
