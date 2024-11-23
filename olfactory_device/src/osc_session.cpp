@@ -93,7 +93,7 @@ bool OscSession::SendData(const std::string& data) {
 
   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
   SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-  std::cout << "[OscSession] Data sent: (" << osc_ip_ << ")" << command << "/" << target << "/" << level << std::endl;
+  std::cout << "[OscSession] Data send: (" << osc_ip_ << ")" << command << "/" << target << "/" << level << std::endl;
   SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
   return true;
 }

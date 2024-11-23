@@ -262,6 +262,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
   auto it = device_next_available_time.find(ip);
   if (it != device_next_available_time.end()) {
     if (i_scent == 0 && scent0 == 0) {
+      now = std::chrono::steady_clock::now();
       if (now < it->second.scent0.cooldown_end_time) {
         // Device is still unavailable
         is_available = false;
@@ -272,13 +273,14 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return OdResult::SUCCESS;
       } else {
-        is_available = true;
+        is_available = false;
         std::string command = "release(0," + std::to_string(static_cast<int>(duration)) + ")";
         if (!device_sessions[ip]->SendData(command)) {
           spdlog::error("{}({}): Failed to set SCENT.", id, ip);
           return OdResult::ERROR_UNKNOWN;
         }
         // Calculate emission_end_time and cooldown_end_time
+        now = std::chrono::steady_clock::now();
         auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
         auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
         // Update the times and duration for the device
@@ -287,6 +289,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
     }
     
     if (i_scent == 1 && scent1 == 1) {
+      now = std::chrono::steady_clock::now();
       if (now < it->second.scent1.cooldown_end_time) {
         // Device is still unavailable
         is_available = false;
@@ -297,13 +300,14 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return OdResult::SUCCESS;
       } else {
-        is_available = true;
+        is_available = false;
         std::string command = "release(1," + std::to_string(static_cast<int>(duration)) + ")";
         if (!device_sessions[ip]->SendData(command)) {
           spdlog::error("{}({}): Failed to set SCENT.", id, ip);
           return OdResult::ERROR_UNKNOWN;
         }
         // Calculate emission_end_time and cooldown_end_time
+        now = std::chrono::steady_clock::now();
         auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
         auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
         // Update the times and duration for the device
@@ -312,6 +316,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
     }
 
     if (i_scent == 0 && scent0 == 2) {
+      now = std::chrono::steady_clock::now();
       if (now < it->second.scent2.cooldown_end_time) {
         // Device is still unavailable
         is_available = false;
@@ -322,13 +327,14 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return OdResult::SUCCESS;
       } else {
-        is_available = true;
+        is_available = false;
         std::string command = "release(2," + std::to_string(static_cast<int>(duration)) + ")";
         if (!device_sessions[ip]->SendData(command)) {
           spdlog::error("{}({}): Failed to set SCENT.", id, ip);
           return OdResult::ERROR_UNKNOWN;
         }
         // Calculate emission_end_time and cooldown_end_time
+        now = std::chrono::steady_clock::now();
         auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
         auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
         // Update the times and duration for the device
@@ -337,6 +343,7 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
     }
 
     if (i_scent == 1 && scent1 == 3) {
+      now = std::chrono::steady_clock::now();
       if (now < it->second.scent3.cooldown_end_time) {
         // Device is still unavailable
         is_available = false;
@@ -347,13 +354,14 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return OdResult::SUCCESS;
       } else {
-        is_available = true;
+        is_available = false;
         std::string command = "release(3," + std::to_string(static_cast<int>(duration)) + ")";
         if (!device_sessions[ip]->SendData(command)) {
           spdlog::error("{}({}): Failed to set SCENT.", id, ip);
           return OdResult::ERROR_UNKNOWN;
         }
         // Calculate emission_end_time and cooldown_end_time
+        now = std::chrono::steady_clock::now();
         auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
         auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
         // Update the times and duration for the device
@@ -412,7 +420,7 @@ OLFACTORY_DEVICE_API OdResult sony_odIsScentEmissionAvailable(const char* device
   int motor = 0;
 
   std::tie(ip, scent0, scent1, motor) = ParseJson(id);
-  spdlog::debug("{}({}): {} called.", id, ip, __func__);
+//  spdlog::debug("{}({}): {} called.", id, ip, __func__);
 
   // Check if a session is active for the given device_id
   if (device_sessions.find(ip) == device_sessions.end() || !device_sessions[ip]->IsConnected()) {
@@ -475,7 +483,7 @@ OLFACTORY_DEVICE_API OdResult sony_odIsScentEmissionAvailable(const char* device
   // Check if scent emission is available
 //  is_available = device_sessions[ip]->IsScentEmissionAvailable();
 
-  spdlog::debug("{}({}): {} completed.", id, ip, __func__);
+//  spdlog::debug("{}({}): {} completed.", id, ip, __func__);
   return OdResult::SUCCESS;
 }
 
