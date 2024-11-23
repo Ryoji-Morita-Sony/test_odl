@@ -91,7 +91,10 @@ bool OscSession::SendData(const std::string& data) {
   p << osc::BeginBundleImmediate << osc::BeginMessage("/scent") << command.c_str() << target << level << osc::EndMessage << osc::EndBundle;
   transmitSocket.Send(p.Data(), p.Size());
 
-  std::cout << "[OscSession] Data sent: " << command << "/" << target << "/" << level << std::endl;
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+  SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+  std::cout << "[OscSession] Data sent: (" << osc_ip_ << ")" << command << "/" << target << "/" << level << std::endl;
+  SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
   return true;
 }
 
