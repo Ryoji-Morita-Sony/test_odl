@@ -109,6 +109,45 @@ OLFACTORY_DEVICE_API OdResult sony_odRegisterLogCallback(OdLogCallback callback)
   return OdResult::SUCCESS;
 }
 
+std::tuple<std::string, int, int, int> ParseJson(std::string id) {
+// JSON list
+  std::ifstream inputFile(FILE_DEVICE_JSON);
+  if (!inputFile) {
+    std::cerr << "Failed to open device.json." << std::endl;
+    return std::make_tuple("file NG", 0, 0, 0);
+  }
+  std::stringstream buffer;
+  buffer << inputFile.rdbuf();
+  std::string json = buffer.str();
+  // std::cout << json << std::endl;
+
+  // parse JSON
+  picojson::value v;
+  std::string err = picojson::parse(v, json);
+  if (!err.empty()) {
+    std::cerr << "JSON parse error: " << err << std::endl;
+    return std::make_tuple("file NG", 0, 0, 0);
+  }
+
+  std::string ip;
+  int scent0;
+  int scent1;
+  int motor;
+
+  // Get device info
+  const picojson::array& devices = v.get("device").get<picojson::array>();
+  for (const auto& device : devices) {
+    if (id == device.get("id").get<std::string>()) {
+      ip = device.get("ip").get<std::string>();
+      scent0 = static_cast<int>(device.get("scent0").get<double>());
+      scent1 = static_cast<int>(device.get("scent1").get<double>());
+      motor  = static_cast<int>(device.get("motor").get<double>());
+    }
+  }
+
+  return std::make_tuple(ip, scent0, scent1, motor);
+}
+
 static OdResult CtrlDevice(std::string device, std::vector<std::string> vec) {
   for (const auto& cmd : vec) {
     if (!device_sessions[device]->SendData(cmd)) {
@@ -121,72 +160,97 @@ static OdResult CtrlDevice(std::string device, std::vector<std::string> vec) {
 }
 
 OLFACTORY_DEVICE_API OdResult sony_odStartSession(const char* device_id) {
-  spdlog::debug("{} called.", __func__);
-  std::string device(device_id);
+  std::string id(device_id);
+  std::string ip = "";
+  int scent0 = 0;
+  int scent1 = 0;
+  int motor = 0;
+
+  std::tie(ip, scent0, scent1, motor) = ParseJson(id);
+  spdlog::debug("{}({}): {} called.", id, ip, __func__);
 
   // Check if a session is already active for the given device_id
-  if (device_sessions.find(device) != device_sessions.end() && device_sessions[device]->IsConnected()) {
-    spdlog::error("Session is already active on port: {}", device_id);
-    return OdResult::ERROR_UNKNOWN;
+  if (device_sessions.find(ip) != device_sessions.end() && device_sessions[ip]->IsConnected()) {
+    spdlog::debug("{}({}): Session is already active on port", id, ip);
+    return OdResult::SUCCESS;
   }
 
   // Emplace the new SessionType (either StubSession or UartSession)
-  device_sessions.emplace(device, std::make_unique<SessionType>());
+  device_sessions.emplace(ip, std::make_unique<SessionType>());
   DeviceTimes time;
-  device_next_available_time.emplace(device, time);
+  device_next_available_time.emplace(ip, time);
 
   // Open the session for the newly created session instance
-  if (!device_sessions[device]->Open(device_id)) {
-    spdlog::error("Failed to open connection on port: {}", device_id);
-    device_sessions.erase(device);  // Remove if failed
+  if (!device_sessions[ip]->Open(ip.c_str())) {
+    spdlog::error("{}({}): Failed to open connection on port", id, ip);
+    device_sessions.erase(ip);  // Remove if failed
     return OdResult::ERROR_UNKNOWN;
   }
 
   std::vector<std::string> vec = {"motor(0, 30)", "motor(1, 30)"};
-  CtrlDevice(device, vec);
+  CtrlDevice(ip, vec);
 
-  spdlog::debug("{} completed.", __func__);
+  spdlog::debug("{}({}): {} completed.", id, ip, __func__);
   return OdResult::SUCCESS;
 }
 
 OLFACTORY_DEVICE_API OdResult sony_odEndSession(const char* device_id) {
-  spdlog::debug("{} called.", __func__);
-  std::string device(device_id);
+  std::string id(device_id);
+  std::string ip = "";
+  int scent0 = 0;
+  int scent1 = 0;
+  int motor = 0;
+
+  std::tie(ip, scent0, scent1, motor) = ParseJson(id);
+  spdlog::debug("{}({}): {} called.", id, ip, __func__);
 
   // Check if a session is active for the given device_id
-  if (device_sessions.find(device) == device_sessions.end() || !device_sessions[device]->IsConnected()) {
-    spdlog::error("No active session on port: {}", device_id);
-    return OdResult::ERROR_UNKNOWN;
+  if (device_sessions.find(ip) == device_sessions.end() || !device_sessions[ip]->IsConnected()) {
+    spdlog::error("{}({}): No active session on port", id, ip);
+    return OdResult::SUCCESS;
   }
 
 //  std::vector<std::string> vec = {"motor(0, 0)", "motor(1, 0)", "reset(0, 0)"};
   std::vector<std::string> vec = {"motor(0, 0)", "motor(1, 0)"};
-  CtrlDevice(device, vec);
+  CtrlDevice(ip, vec);
 
   // Close the session and remove it from the map
-  device_sessions[device]->Close();
-  device_sessions.erase(device);
+  device_sessions[ip]->Close();
+  device_sessions.erase(ip);
 
-  spdlog::debug("{} completed.", __func__);
+  spdlog::debug("{}({}): {} completed.", id, ip, __func__);
   return OdResult::SUCCESS;
 }
 
 OLFACTORY_DEVICE_API OdResult sony_odSetScentOrientation(const char* device_id, float yaw, float pitch) {
-  spdlog::debug("{} called.", __func__);
-  spdlog::debug("{} completed.", __func__);
+  std::string id(device_id);
+  std::string ip = "";
+  int scent0 = 0;
+  int scent1 = 0;
+  int motor = 0;
+
+  std::tie(ip, scent0, scent1, motor) = ParseJson(id);
+  spdlog::debug("{}({}): {} called.", id, ip, __func__);
+  spdlog::debug("{}({}): {} completed.", id, ip, __func__);
   return OdResult::ERROR_FUNCTION_UNSUPPORTED;
 }
 
 OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, const char* scent_name, float duration, bool& is_available) {
-  spdlog::debug("{} called.", __func__);
-  std::string device(device_id);
+  std::string id(device_id);
+  std::string ip = "";
+  int scent0 = 0;
+  int scent1 = 0;
+  int motor = 0;
+
+  std::tie(ip, scent0, scent1, motor) = ParseJson(id);
+  spdlog::debug("{}({}): {} called.", id, ip, __func__);
+
   std::string scent(scent_name);
-  int i_device = std::stoi(device);
   int i_scent = std::stoi(scent);
 
   // Check if a session is active for the given device_id
-  if (device_sessions.find(device) == device_sessions.end() || !device_sessions[device]->IsConnected()) {
-    spdlog::error("No active session on port: {}. Start a session first.", device_id);
+  if (device_sessions.find(ip) == device_sessions.end() || !device_sessions[ip]->IsConnected()) {
+    spdlog::error("{}({}): No active session on port. Start a session first.", id, ip);
     return OdResult::ERROR_UNKNOWN;
   }
 
@@ -195,121 +259,223 @@ OLFACTORY_DEVICE_API OdResult sony_odStartScentEmission(const char* device_id, c
   // Get the current time
   auto now = std::chrono::steady_clock::now();
   // Check the last start time for the given device
-  auto it = device_next_available_time.find(device);
+  auto it = device_next_available_time.find(ip);
   if (it != device_next_available_time.end()) {
-    if (i_scent == 0) {
+    if (i_scent == 0 && scent0 == 0) {
       if (now < it->second.scent0.cooldown_end_time) {
         // Device is still unavailable
         is_available = false;
-        spdlog::debug("{} Device is still unavailable.", __func__);
+        spdlog::debug("{}({}): {} Device is still unavailable.", id, ip, __func__);
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+        std::cout << "[OscSession] Data sent: " << id << "(" << ip << ")" << "Device is still unavailable." << std::endl;
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return OdResult::SUCCESS;
       } else {
         is_available = true;
         std::string command = "release(0," + std::to_string(static_cast<int>(duration)) + ")";
-        if (!device_sessions[device]->SendData(command)) {
-          spdlog::error("Failed to set SCENT.");
+        if (!device_sessions[ip]->SendData(command)) {
+          spdlog::error("{}({}): Failed to set SCENT.", id, ip);
           return OdResult::ERROR_UNKNOWN;
         }
         // Calculate emission_end_time and cooldown_end_time
         auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
         auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
         // Update the times and duration for the device
-        device_next_available_time[device].scent0 = {emission_end_time, cooldown_end_time, duration};
+        device_next_available_time[ip].scent0 = {emission_end_time, cooldown_end_time, duration};
       }
-    } else if (i_scent == 1) {
+    }
+    
+    if (i_scent == 1 && scent1 == 1) {
       if (now < it->second.scent1.cooldown_end_time) {
         // Device is still unavailable
         is_available = false;
-        spdlog::debug("{} Device is still unavailable.", __func__);
+        spdlog::debug("{}({}): {} Device is still unavailable.", id, ip, __func__);
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+        std::cout << "[OscSession] Data sent: " << id << "(" << ip << ")" << "Device is still unavailable." << std::endl;
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return OdResult::SUCCESS;
       } else {
         is_available = true;
         std::string command = "release(1," + std::to_string(static_cast<int>(duration)) + ")";
-        if (!device_sessions[device]->SendData(command)) {
-          spdlog::error("Failed to set SCENT.");
+        if (!device_sessions[ip]->SendData(command)) {
+          spdlog::error("{}({}): Failed to set SCENT.", id, ip);
           return OdResult::ERROR_UNKNOWN;
         }
         // Calculate emission_end_time and cooldown_end_time
         auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
         auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
         // Update the times and duration for the device
-        device_next_available_time[device].scent1 = {emission_end_time, cooldown_end_time, duration};
+        device_next_available_time[ip].scent1 = {emission_end_time, cooldown_end_time, duration};
       }
-    } else if (i_scent == 2) {
+    }
+
+    if (i_scent == 0 && scent0 == 2) {
       if (now < it->second.scent2.cooldown_end_time) {
         // Device is still unavailable
         is_available = false;
-        spdlog::debug("{} Device is still unavailable.", __func__);
+        spdlog::debug("{}({}): {} Device is still unavailable.", id, ip, __func__);
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+        std::cout << "[OscSession] Data sent: " << id << "(" << ip << ")" << "Device is still unavailable." << std::endl;
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return OdResult::SUCCESS;
       } else {
         is_available = true;
         std::string command = "release(2," + std::to_string(static_cast<int>(duration)) + ")";
-        if (!device_sessions[device]->SendData(command)) {
-          spdlog::error("Failed to set SCENT.");
+        if (!device_sessions[ip]->SendData(command)) {
+          spdlog::error("{}({}): Failed to set SCENT.", id, ip);
           return OdResult::ERROR_UNKNOWN;
         }
         // Calculate emission_end_time and cooldown_end_time
         auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
         auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
         // Update the times and duration for the device
-        device_next_available_time[device].scent2 = {emission_end_time, cooldown_end_time, duration};
+        device_next_available_time[ip].scent2 = {emission_end_time, cooldown_end_time, duration};
       }
-    } else if (i_scent == 3) {
+    }
+
+    if (i_scent == 1 && scent1 == 3) {
       if (now < it->second.scent3.cooldown_end_time) {
         // Device is still unavailable
         is_available = false;
-        spdlog::debug("{} Device is still unavailable.", __func__);
+        spdlog::debug("{}({}): {} Device is still unavailable.", id, ip, __func__);
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+        std::cout << "[OscSession] Data sent: " << id << "(" << ip << ")" << "Device is still unavailable." << std::endl;
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return OdResult::SUCCESS;
       } else {
         is_available = true;
         std::string command = "release(3," + std::to_string(static_cast<int>(duration)) + ")";
-        if (!device_sessions[device]->SendData(command)) {
-          spdlog::error("Failed to set SCENT.");
+        if (!device_sessions[ip]->SendData(command)) {
+          spdlog::error("{}({}): Failed to set SCENT.", id, ip);
           return OdResult::ERROR_UNKNOWN;
         }
         // Calculate emission_end_time and cooldown_end_time
         auto emission_end_time = now               + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(duration));
         auto cooldown_end_time = emission_end_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(6.0f));
         // Update the times and duration for the device
-        device_next_available_time[device].scent3 = {emission_end_time, cooldown_end_time, duration};
+        device_next_available_time[ip].scent3 = {emission_end_time, cooldown_end_time, duration};
       }
     }
   }
-  spdlog::debug("{} completed.", __func__);
+  spdlog::debug("{}({}): {} completed.", id, ip, __func__);
   return OdResult::SUCCESS;
 }
 
 OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
-  spdlog::debug("{} called.", __func__);
-  std::string device(device_id);
+  std::string id(device_id);
+  std::string ip = "";
+  int scent0 = 0;
+  int scent1 = 0;
+  int motor = 0;
+
+  std::tie(ip, scent0, scent1, motor) = ParseJson(id);
+  spdlog::debug("{}({}): {} called.", id, ip, __func__);
 
   // Check if a session is active for the given device_id
-  if (device_sessions.find(device) == device_sessions.end() || !device_sessions[device]->IsConnected()) {
-    spdlog::error("No active session on port: {}. Start a session first.", device_id);
+  if (device_sessions.find(ip) == device_sessions.end() || !device_sessions[ip]->IsConnected()) {
+    spdlog::error("{}({}): No active session on port. Start a session first.", id, ip);
     return OdResult::ERROR_UNKNOWN;
   }
 
-  std::vector<std::string> vec = {"release(0, 0)", "release(1, 0)", "release(2, 0)", "release(3, 0)"};
-  CtrlDevice(device, vec);
+  std::string command;
+  command = "release(" + std::to_string(scent0) + ", 0)";
+  if (!device_sessions[ip]->SendData(command)) {
+    spdlog::error("{}({}): Failed to set SCENT.", id, ip);
+    return OdResult::ERROR_UNKNOWN;
+  }
 
-  spdlog::debug("{} completed.", __func__);
+  command = "release(" + std::to_string(scent1) + ", 0)";
+  if (!device_sessions[ip]->SendData(command)) {
+    spdlog::error("{}({}): Failed to set SCENT.", id, ip);
+    return OdResult::ERROR_UNKNOWN;
+  }
+
+  // Check if the device has an active start time
+  auto it = device_next_available_time.find(ip);
+  if (it != device_next_available_time.end()) {
+    device_next_available_time.erase(it);
+  }
+
+  spdlog::debug("{}({}): {} completed.", id, ip, __func__);
   return OdResult::SUCCESS;
 }
 
 OLFACTORY_DEVICE_API OdResult sony_odIsScentEmissionAvailable(const char* device_id, bool& is_available) {
-  spdlog::debug("{} called.", __func__);
-  std::string device(device_id);
+  std::string id(device_id);
+  std::string ip = "";
+  int scent0 = 0;
+  int scent1 = 0;
+  int motor = 0;
+
+  std::tie(ip, scent0, scent1, motor) = ParseJson(id);
+  spdlog::debug("{}({}): {} called.", id, ip, __func__);
 
   // Check if a session is active for the given device_id
-  if (device_sessions.find(device) == device_sessions.end() || !device_sessions[device]->IsConnected()) {
-    spdlog::error("No active session on port: {}. Start a session first.", device_id);
+  if (device_sessions.find(ip) == device_sessions.end() || !device_sessions[ip]->IsConnected()) {
+    spdlog::error("{}({}): No active session on port. Start a session first.", id, ip);
     return OdResult::ERROR_UNKNOWN;
   }
 
-  // Check if scent emission is available
-  is_available = device_sessions[device]->IsScentEmissionAvailable();
+  // Get the current time
+  auto now = std::chrono::steady_clock::now();
 
-  spdlog::debug("{} completed.", __func__);
+  // Check the last start time for the given device
+  auto it = device_next_available_time.find(ip);
+  if (it != device_next_available_time.end()) {
+
+    bool flag_scent0 = true;
+    bool flag_scent1 = true;
+    bool flag_scent2 = true;
+    bool flag_scent3 = true;
+
+    if (scent0 == 0) {
+      if (now < it->second.scent0.cooldown_end_time) {
+        flag_scent0 = false;
+      } else {
+        flag_scent0 = true;
+      }
+    }
+
+    if (scent1 == 1) {
+      if (now < it->second.scent1.cooldown_end_time) {
+        flag_scent1 = false;
+      } else {
+        flag_scent1 = true;
+      }
+    }
+
+    if (scent0 == 2) {
+      if (now < it->second.scent2.cooldown_end_time) {
+        flag_scent2 = false;
+      } else {
+        flag_scent2 = true;
+      }
+    }
+
+    if (scent1 == 3) {
+      if (now < it->second.scent3.cooldown_end_time) {
+        flag_scent3 = false;
+      } else {
+        flag_scent3 = true;
+      }
+    }
+
+    if (flag_scent0 == true && flag_scent1 == true && flag_scent2 == true && flag_scent3 == true) {
+      is_available = true;
+    } else {
+      is_available = false;
+    }
+
+  }
+
+  // Check if scent emission is available
+//  is_available = device_sessions[ip]->IsScentEmissionAvailable();
+
+  spdlog::debug("{}({}): {} completed.", id, ip, __func__);
   return OdResult::SUCCESS;
 }
 
