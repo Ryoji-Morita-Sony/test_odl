@@ -59,7 +59,8 @@ void StubSession::Close() {
 
 bool StubSession::IsConnected() const {
   // Log the check and return the simulated connection status
-  spdlog::debug("[StubSession] IsConnected called.");
+  // spdlog::debug("[StubSession] IsConnected called.");
+  // Comment out because of unit_test, sony_odIsScentEmissionAvailable() in while loop.
 
   return connected_;
 }
