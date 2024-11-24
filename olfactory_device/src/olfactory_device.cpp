@@ -52,8 +52,8 @@ using SessionType = UartSession;
 using SessionType = OscSession;
 #endif
 
-// Uncomment to be enabled Thread
-//#define ENABLED_THREAD
+// Uncomment to use the registry key's path
+//#define USE_JSON_PATH_FROM_REGISTRY_KEY
 
 
 #define FILE_DEVICE_JSON ("C:\\VisualStudioProjects\\device.json")
@@ -109,9 +109,50 @@ OLFACTORY_DEVICE_API OdResult sony_odRegisterLogCallback(OdLogCallback callback)
   return OdResult::SUCCESS;
 }
 
+#ifdef USE_JSON_PATH_FROM_REGISTRY_KEY
+/** Get the installation path from a registry key */
+std::wstring GetInstallPath() {
+  HKEY hkey = HKEY_LOCAL_MACHINE;
+  const std::wstring sub_key = std::wstring(L"SOFTWARE\\Sony Corporation\\Olfactory");
+  const std::wstring value = L"Path";
+
+  DWORD data_size{};
+  LONG return_code =
+      ::RegGetValueW(hkey, sub_key.c_str(), value.c_str(), RRF_RT_REG_SZ, nullptr, nullptr, &data_size);
+  if (return_code != ERROR_SUCCESS) {
+    return L"";
+  }
+
+  std::wstring data;
+  data.resize(data_size / sizeof(wchar_t));
+
+  return_code =
+      ::RegGetValueW(hkey, sub_key.c_str(), value.c_str(), RRF_RT_REG_SZ, nullptr, &data[0], &data_size);
+  if (return_code != ERROR_SUCCESS) {
+    return L"";
+  }
+
+  DWORD string_length_in_wchars = data_size / sizeof(wchar_t);
+
+  // Exclude the NULL written by the Win32 API
+  string_length_in_wchars--;
+
+  data.resize(string_length_in_wchars);
+  return data;
+}
+#endif
+
 std::tuple<std::string, int, int, int> ParseJson(std::string id) {
-// JSON list
+
+// JSON file
+#ifdef USE_JSON_PATH_FROM_REGISTRY_KEY
+  std::wstring directry = GetInstallPath();
+  std::wstring path = directry + L"json\\device.json";
+  std::ifstream inputFile(path);
+#else
   std::ifstream inputFile(FILE_DEVICE_JSON);
+#endif
+
   if (!inputFile) {
     std::cerr << "Failed to open device.json." << std::endl;
     return std::make_tuple("file NG", 0, 0, 0);
@@ -424,7 +465,7 @@ OLFACTORY_DEVICE_API OdResult sony_odIsScentEmissionAvailable(const char* device
 
   // Check if a session is active for the given device_id
   if (device_sessions.find(ip) == device_sessions.end() || !device_sessions[ip]->IsConnected()) {
-    spdlog::error("{}({}): No active session on port. Start a session first.", id, ip);
+    spdlog::error("{}({}): {} : No active session on port. Start a session first.", id, ip, __func__);
     return OdResult::ERROR_UNKNOWN;
   }
 
