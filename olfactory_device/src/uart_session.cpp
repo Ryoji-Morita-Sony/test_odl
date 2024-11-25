@@ -28,10 +28,7 @@ namespace sony::olfactory_device {
 // Constructor
 UartSession::UartSession()
   : uart_handle_(INVALID_HANDLE_VALUE),
-    connected_(false),
-    t_flag_(false),
-    t_wait_(THREAD_WAIT),
-    t_cmd_("") {}
+    connected_(false) {}
 
 // Destructor
 UartSession::~UartSession() {
@@ -128,29 +125,6 @@ bool UartSession::SendData(const std::string& data) {
   return true;
 }
 
-bool UartSession::SendData(unsigned int data) {
-  if (!connected_) {
-    std::cerr << "[UartSession] UART not connected." << std::endl;
-    return false;
-  }
-
-   // Write data to UART (platform-dependent)
-  DWORD bytes_written;
-  unsigned char byte = 0x00;
-  unsigned int  mask = 0xFF000000;
-
-  for (int i = 24; i >= 0; i = i - 8) {
-    byte = (data & mask) >> i;
-    if (!WriteFile(uart_handle_, (LPCVOID)&byte, sizeof(byte), &bytes_written, nullptr)) {
-      std::cerr << "[UartSession] Failed to send data over UART." << std::endl;
-      return false;
-    }
-    mask = mask >> 8;
-  }
-  std::cout << "[UartSession] Data sent: " << std::hex << std::setw(8) << std::setfill('0') << data << std::endl;
-  return true;
-}
-
 bool UartSession::RecvData(std::string& data) {
   if (!connected_) {
     std::cerr << "[UartSession] UART not connected." << std::endl;
@@ -176,84 +150,12 @@ bool UartSession::RecvData(std::string& data) {
   }
 }
 
-void UartSession::ThreadFunc() {
-  std::string result = "";
-
-  while (t_flag_) {
-    if (!t_cmd_._Equal("")) {
-      if (!this->SendData(t_cmd_)) {
-        std::cerr << "[UartSession] Failed to send." << std::endl;
-      }
-      if (!this->RecvData(result)) {
-        std::cerr << "[UartSession] Failed to receive." << std::endl;
-      }
-      t_cmd_ = "";
-    }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(t_wait_));
-  }
-  std::cout << "[UartSession] Thread ending..." << std::endl;
-}
-
-bool UartSession::StartThreadFunc() {
+bool UartSession::IsScentEmissionAvailable() {
   if (!connected_) {
     std::cerr << "[UartSession] UART not connected." << std::endl;
     return false;
   }
-
-  t_flag_ = true;
-  t_ = std::thread(&UartSession::ThreadFunc, this);
-  std::cout << "[UartSession] Thread has started." << std::endl;
   return true;
-}
-
-bool UartSession::StopThreadFunc() {
-  if (!connected_) {
-    std::cerr << "[UartSession] UART not connected." << std::endl;
-    return false;
-  }
-
-  t_flag_ = false;
-  if (t_.joinable()) {
-    t_.join();
-  }
-  std::cout << "[UartSession] Thread has finished." << std::endl;
-  return true;
-}
-
-bool UartSession::SendCmd(const std::string& cmd, long long wait) {
-  if (!connected_) {
-    std::cerr << "[UartSession] UART not connected." << std::endl;
-    return false;
-  }
-
-  t_cmd_ = cmd;
-  t_wait_ = wait;
-  return true;
-}
-
-bool UartSession::SetScent(unsigned int id, const std::string& name) {
-  if (!connected_) {
-    std::cerr << "[UartSession] Error: Cannot set a scent, not connected to any device." << std::endl;
-    return false;
-  }
-
-  scent[id] = name;
-  return true;
-}
-
-int UartSession::GetScent(const std::string& name) {
-  if (!connected_) {
-    std::cerr << "[UartSession] Error: Cannot get a scent, not connected to any device." << std::endl;
-    return -1;
-  }
-
-  for (int i = 0; i < sizeof(scent); i++) {
-    if (scent[i] == name) {
-      return i;
-    }
-  }
-  return -1;
 }
 
 }  // namespace sony::olfactory_device

@@ -43,220 +43,176 @@ class TestOlfactoryDevice : public ::testing::Test {
 
   virtual void TearDown() {}
 
-  // Convert std::wstring to const char*
-  const char* ConvertWStringToConstChar(const std::wstring& wstr) {
-    int bufferSize = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
-    if (bufferSize == 0) {
-      return nullptr;
-    }
-
-    char* buffer = new char[bufferSize];
-    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, buffer, bufferSize, nullptr, nullptr);
-    return buffer;
-  }
-
   // Log callback function
   static void CustomLogCallback(const char* message, OdLogLevel level) {
-    std::cout << "[Log Level: " << static_cast<int>(level) << "] " << message << std::endl;
+//    std::cout << "[Log Level: " << static_cast<int>(level) << "] " << message << std::endl;
+    std::cout << "[Log Level: " << static_cast<int>(level) << "] " << message;
   }
-
 };
 
 // Test case to start scent emission with float level
-TEST_F(TestOlfactoryDevice, DISABLED_01_start_scent_emission) {
-  std::string device_id = "COM3";
-  std::string name = "4";
-  float level = 0.85f;
+TEST_F(TestOlfactoryDevice, 01_start_scent_emission) {
+  std::string device_id = "1";
+  std::string scent_name = "0";
+  float duration = 1.0f;
 
   // Register the custom log callback function
-  OdResult result =
-      sony::olfactory_device::sony_odRegisterLogCallback(TestOlfactoryDevice::CustomLogCallback);
+  OdResult result = sony::olfactory_device::sony_odRegisterLogCallback(TestOlfactoryDevice::CustomLogCallback);
   ASSERT_EQ(result, OdResult::SUCCESS);
 
-  // First, start a session for device
   result = sony_odStartSession(device_id.c_str());
   ASSERT_EQ(result, OdResult::SUCCESS);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  // wait
-  std::this_thread::sleep_for(std::chrono::seconds(3));
-
-  // Then, start scent emission for device with scent and level
-  result = sony_odStartScentEmission(device_id.c_str(), name.c_str(), level);
+  bool b_is_available = false;
+  result = sony_odStartScentEmission(device_id.c_str(), scent_name.c_str(), duration, b_is_available);
   ASSERT_EQ(result, OdResult::SUCCESS);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  // wait
-  std::this_thread::sleep_for(std::chrono::seconds(10));
-
-  // End the session for device
   result = sony_odEndSession(device_id.c_str());
   ASSERT_EQ(result, OdResult::SUCCESS);
 }
 
 // Test case to stop scent emission
-TEST_F(TestOlfactoryDevice, DISABLED_02_stop_scent_emission) {
-  std::string device_id = "192.168.1.103";
-  std::string name = "103_00";
-  float level = 0.4f;
+TEST_F(TestOlfactoryDevice, 02_stop_scent_emission) {
+  std::string device_id = "4";
+  std::string scent_name = "1";
+  float duration = 2.0f;
 
-  // First, start a session for device
-  OdResult result = sony_odStartSession(device_id.c_str());
+  // Register the custom log callback function
+  OdResult result = sony::olfactory_device::sony_odRegisterLogCallback(TestOlfactoryDevice::CustomLogCallback);
   ASSERT_EQ(result, OdResult::SUCCESS);
 
-  // Start scent emission for device
-  result = sony_odStartScentEmission(device_id.c_str(), name.c_str(), level);
+  result = sony_odStartSession(device_id.c_str());
   ASSERT_EQ(result, OdResult::SUCCESS);
-  std::this_thread::sleep_for(std::chrono::seconds(10));
-//Sleep(20000);   // milliseconds
 
-  // Stop the scent emission for device
+  bool b_is_available = false;
+  result = sony_odStartScentEmission(device_id.c_str(), scent_name.c_str(), duration, b_is_available);
+  ASSERT_EQ(result, OdResult::SUCCESS);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
   result = sony_odStopScentEmission(device_id.c_str());
   ASSERT_EQ(result, OdResult::SUCCESS);
-  std::this_thread::sleep_for(std::chrono::seconds(5));
-  // Sleep(20000);   // milliseconds
 
-  // End the session for device
   result = sony_odEndSession(device_id.c_str());
   ASSERT_EQ(result, OdResult::SUCCESS);
 }
 
 // Test case to handle the case where no session is active when stopping scent emission
-TEST_F(TestOlfactoryDevice, DISABLED_03_stop_scent_emission_without_session) {
-  std::string device_id = "COM3";
+TEST_F(TestOlfactoryDevice, 03_stop_scent_emission_without_session) {
+  std::string device_id = "3";
 
-  // Attempt to stop scent emission without starting a session
-  OdResult result = sony_odStopScentEmission(device_id.c_str());
+  // Register the custom log callback function
+  OdResult result = sony::olfactory_device::sony_odRegisterLogCallback(TestOlfactoryDevice::CustomLogCallback);
+  ASSERT_EQ(result, OdResult::SUCCESS);
+
+  result = sony_odStopScentEmission(device_id.c_str());
   ASSERT_EQ(result, OdResult::ERROR_UNKNOWN);
 }
 
-// Test case to set the scent orientation
-TEST_F(TestOlfactoryDevice, DISABLED_04_set_scent_orientation) {
-  std::string device_id = "COM4";
-  float yaw = 180.0f;
-  float pitch = 0.0f;
+TEST_F(TestOlfactoryDevice, 04_is_scent_emission_available) {
+  std::string device_id = "3";
+  bool b_is_available = false;
 
-  // First, start a session for device
-  OdResult result = sony_odStartSession(device_id.c_str());
+  // Register the custom log callback function
+  OdResult result = sony::olfactory_device::sony_odRegisterLogCallback(TestOlfactoryDevice::CustomLogCallback);
   ASSERT_EQ(result, OdResult::SUCCESS);
 
-  // Set the scent orientation with yaw and pitch
-  result = sony_odSetScentOrientation(device_id.c_str(), yaw, pitch);
+  result = sony_odStartSession(device_id.c_str());
+  result = sony_odIsScentEmissionAvailable(device_id.c_str(), b_is_available);
   ASSERT_EQ(result, OdResult::SUCCESS);
-
-  // End the session for device
   result = sony_odEndSession(device_id.c_str());
-  ASSERT_EQ(result, OdResult::SUCCESS);
 }
 
-// Test case to set the scent orientation
-TEST_F(TestOlfactoryDevice, DISABLED_05_set_scent_orientation_motion) {
-  std::string device_id = "COM4";
-  float yaw = 0.0f;
-  float pitch = 0.0f;
-  int cnt_yaw = 1;
-  int cnt_pitch = 1;
-  int time_start = 2;   // seccond
-  int time_wait = 16;   // millsecond
+TEST_F(TestOlfactoryDevice, 05_is_scent_emission_available) {
+  std::string device_id = "0";
+  bool b_is_available = true;
 
-  // First, start a session for device
-  OdResult result = sony_odStartSession(device_id.c_str());
+  // Register the custom log callback function
+  OdResult result = sony::olfactory_device::sony_odRegisterLogCallback(TestOlfactoryDevice::CustomLogCallback);
   ASSERT_EQ(result, OdResult::SUCCESS);
 
-  // (yaw, pitch) = (0, 0)
-  result = sony_odSetScentOrientation(device_id.c_str(), yaw, pitch);
-  ASSERT_EQ(result, OdResult::SUCCESS);
-  std::this_thread::sleep_for(std::chrono::seconds(time_start));
+  result = sony_odStartSession("0");
+  result = sony_odStartSession("1");
 
-  for (int i = 0; i < 360; i++) {
-    result = sony_odSetScentOrientation(device_id.c_str(), yaw, pitch);
+  int cnt = 0;
+  while (cnt < 3) {
+    result = sony_odStartScentEmission("0", "0", 1.0f, b_is_available);
+    auto start = std::chrono::steady_clock::now();
+    while (b_is_available == false) {
+      result = sony_odIsScentEmissionAvailable("0", b_is_available);
+      ASSERT_EQ(result, OdResult::SUCCESS);
+    }
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "[unit_test] end - start: " << elapsed_seconds.count() << "seconds" << std::endl;
+    cnt++;
+  }
+
+  result = sony_odStopScentEmission("0");
+  result = sony_odStopScentEmission("1");
+  result = sony_odEndSession("0");
+  result = sony_odEndSession("1");
+}
+
+// Test case to start scent emission with float level
+TEST_F(TestOlfactoryDevice, 06_osc_devcies) {
+  int max = 24;
+  std::string device_id[24] = { "0",  "0",  "1",  "1",
+                                "2",  "2",  "3",  "3",
+                                "4",  "4",  "5",  "5",
+                                "6",  "6",  "7",  "7",
+                                "8",  "8",  "9",  "9",
+                               "10", "10", "11", "11"
+                              };
+  std::string scent_name[2] = {"0", "1"};
+  float duration = 1.0f;
+  OdResult result;
+  bool b_is_available = false;
+
+  // Register the custom log callback function
+  result = sony::olfactory_device::sony_odRegisterLogCallback(TestOlfactoryDevice::CustomLogCallback);
+  ASSERT_EQ(result, OdResult::SUCCESS);
+
+  //  result = sony_odStartScentEmission("3", "1", 3.0f, b_is_available);
+  auto start = std::chrono::steady_clock::now();
+
+  for (int i = 0; i < max; i++) {
+    result = sony_odStartSession(device_id[i].c_str());
     ASSERT_EQ(result, OdResult::SUCCESS);
-    std::this_thread::sleep_for(std::chrono::milliseconds(time_wait));
-    yaw = yaw + cnt_yaw;
-    pitch = pitch + cnt_pitch;
-    if (pitch > 90) {
-      cnt_pitch = -1;
-    } else if (pitch < -90) {
-      cnt_pitch = 1;
+  }
+
+  auto end = std::chrono::steady_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end - start;
+  std::cout << "[unit_test] end - start: " << elapsed_seconds.count() << "seconds" << std::endl;
+
+  for (int i = 0; i < max; i++) {
+    while (b_is_available == false) {
+      result = sony_odIsScentEmissionAvailable(device_id[i].c_str(), b_is_available);
+      ASSERT_EQ(result, OdResult::SUCCESS);
     }
-  }
+    result = sony_odStartScentEmission(device_id[i].c_str(), "0", duration, b_is_available);
+    ASSERT_EQ(result, OdResult::SUCCESS);
 
-  // (yaw, pitch) = (0, 0)
-  yaw = 0;
-  pitch = 0;
-  result = sony_odSetScentOrientation(device_id.c_str(), yaw, pitch);
-  ASSERT_EQ(result, OdResult::SUCCESS);
-  std::this_thread::sleep_for(std::chrono::seconds(time_start));
-
-  // End the session for device
-  result = sony_odEndSession(device_id.c_str());
-  ASSERT_EQ(result, OdResult::SUCCESS);
-}
-
-// Test case to start scent emission with float level
-TEST_F(TestOlfactoryDevice, DISABLED_06_uart_9_devcies) {
-  int max = 9;
-  std::wstring device_id[9] = {L"COM3", L"COM5", L"COM6", L"COM7", L"COM8", L"COM9",
-                               L"\\\\.\\COM12", L"\\\\.\\COM13", L"\\\\.\\COM14"};
-  std::string name[9] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
-  float level[9] = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f};
-  OdResult result[9];
-
-  for (int i = 0; i < max; i++) {
-    result[i] = sony_odStartSession(ConvertWStringToConstChar(device_id[i]));
-    ASSERT_EQ(result[i], OdResult::SUCCESS);
-  }
-
-  while(true) {
-    for (int i = 0; i < max; i++) {
-      result[i] =
-          sony_odStartScentEmission(ConvertWStringToConstChar(device_id[i]), name[i].c_str(), level[i]);
-      ASSERT_EQ(result[i], OdResult::SUCCESS);
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    while (b_is_available == false) {
+      result = sony_odIsScentEmissionAvailable(device_id[i].c_str(), b_is_available);
+      ASSERT_EQ(result, OdResult::SUCCESS);
     }
+    result = sony_odStartScentEmission(device_id[i].c_str(), "1", duration, b_is_available);
+    ASSERT_EQ(result, OdResult::SUCCESS);
+
+    result = sony_odStartScentEmission(device_id[i].c_str(), "0", duration, b_is_available);
+    ASSERT_EQ(result, OdResult::SUCCESS);
   }
 
   for (int i = 0; i < max; i++) {
-    result[i] = sony_odStopScentEmission(ConvertWStringToConstChar(device_id[i]));
-    ASSERT_EQ(result[i], OdResult::SUCCESS);
+    result = sony_odStopScentEmission(device_id[i].c_str());
+    ASSERT_EQ(result, OdResult::SUCCESS);
   }
 
   for (int i = 0; i < max; i++) {
-    result[i] = sony_odEndSession(ConvertWStringToConstChar(device_id[i]));
-    ASSERT_EQ(result[i], OdResult::SUCCESS);
-  }
-}
-
-// Test case to start scent emission with float level
-TEST_F(TestOlfactoryDevice, DISABLED_07_osc_5_devcies) {
-  int max = 5;
-  std::string device_id_head = "192.168.1.";
-  std::string device_id[5] = {"103", "104", "105", "106", "107"};
-  std::string name[5] = {"103_00", "104_01", "105_02", "106_03", "107_00"};
-  float level[5] = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f};
-  OdResult result[5];
-
-  for (int i = 0; i < max; i++) {
-    std::string ip = device_id_head + device_id[i];
-    result[i] = sony_odStartSession(ip.c_str());
-    ASSERT_EQ(result[i], OdResult::SUCCESS);
-  }
-
-  for (int i = 0; i < max; i++) {
-    std::string ip = device_id_head + device_id[i];
-    result[i] = sony_odStartScentEmission(ip.c_str(), name[i].c_str(), level[i]);
-    ASSERT_EQ(result[i], OdResult::SUCCESS);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  }
-
-  for (int i = 0; i < max; i++) {
-    std::string ip = device_id_head + device_id[i];
-    result[i] = sony_odStopScentEmission(ip.c_str());
-    ASSERT_EQ(result[i], OdResult::SUCCESS);
-  }
-
-  for (int i = 0; i < max; i++) {
-    std::string ip = device_id_head + device_id[i];
-    result[i] = sony_odEndSession(ip.c_str());
-    ASSERT_EQ(result[i], OdResult::SUCCESS);
+    result = sony_odEndSession(device_id[i].c_str());
+    ASSERT_EQ(result, OdResult::SUCCESS);
   }
 }
 

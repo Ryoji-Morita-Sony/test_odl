@@ -31,10 +31,7 @@ namespace sony::olfactory_device {
 // Constructor
 StubSession::StubSession()
     : 
-      connected_(false),
-      t_flag_(false),
-      t_wait_(THREAD_WAIT),
-      t_cmd_("") {}
+      connected_(false) {}
 
 // Destructor
 StubSession::~StubSession() {
@@ -54,32 +51,19 @@ bool StubSession::Open(const char* device_id) {
 void StubSession::Close() {
   if (connected_) {
     // Log the action of closing the session
-    spdlog::debug("[StubSession] Close called.");
-
     connected_ = false;  // Simulate closing the connection
   }
 }
 
 bool StubSession::IsConnected() const {
   // Log the check and return the simulated connection status
-  spdlog::debug("[StubSession] IsConnected called.");
+  // spdlog::debug("[StubSession] IsConnected called.");
+  // Comment out because of unit_test, sony_odIsScentEmissionAvailable() in while loop.
 
   return connected_;
 }
 
 bool StubSession::SendData(const std::string& data) {
-  if (!connected_) {
-    spdlog::error("[StubSession] Error: Cannot send data, not connected to any device.");
-    return false;
-  }
-
-  // Log the data being sent and simulate the sending operation
-  spdlog::debug("[StubSession] Data sent: no data because of a simulate: {}", data);
-
-  return true;  // Simulate successful data transmission
-}
-
-bool StubSession::SendData(unsigned int data) {
   if (!connected_) {
     spdlog::error("[StubSession] Error: Cannot send data, not connected to any device.");
     return false;
@@ -103,84 +87,14 @@ bool StubSession::RecvData(std::string& data) {
   return true;  // Simulate successful data transmission
 }
 
-void StubSession::ThreadFunc() {
-  std::string result = "";
-
-  while (t_flag_) {
-    if (!t_cmd_._Equal("")) {
-      if (!this->SendData(t_cmd_)) {
-        spdlog::error("[StubSession] Failed to send.");
-      }
-      if (!this->RecvData(result)) {
-        spdlog::error("[StubSession] Failed to receive.");
-      }
-      t_cmd_ = "";
-    }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(t_wait_));
-  }
-  spdlog::debug("[StubSession] Thread ending...");
-}
-
-bool StubSession::StartThreadFunc() {
+bool StubSession::IsScentEmissionAvailable() {
   if (!connected_) {
-    spdlog::error("[StubSession] Error: Cannot start a thread, not connected to any device.");
+    spdlog::error("[StubSession] Error: Cannot check available, not connected to any device.");
     return false;
   }
 
-  t_flag_ = true;
-  t_ = std::thread(&StubSession::ThreadFunc, this);
-  spdlog::debug("[StubSession] Thread has started.");
+  spdlog::error("[StubSession] Hello World.");
   return true;
-}
-
-bool StubSession::StopThreadFunc() {
-  if (!connected_) {
-    spdlog::error("[StubSession] Error: Cannot stop a thread, not connected to any device.");
-    return false;
-  }
-
-  t_flag_ = false;
-  if (t_.joinable()) {
-    t_.join();
-  }
-  spdlog::debug("[StubSession] Thread has finished.");
-  return true;
-}
-
-bool StubSession::SendCmd(const std::string& cmd, long long wait) {
-  if (!connected_) {
-    spdlog::error("[StubSession] Error: Cannot send a command, not connected to any device.");
-    return false;
-  }
-
-  t_cmd_ = cmd;
-  t_wait_ = wait;
-  return true;
-}
-
-bool StubSession::SetScent(unsigned int id, const std::string& name) {
-  if (!connected_) {
-    spdlog::error("[StubSession] Error: Cannot set a scent, not connected to any device.");
-    return false;
-  }
-
-  scent[id] = name;
-  return true;
-}
-
-int StubSession::GetScent(const std::string& name) {
-  if (!connected_) {
-    spdlog::error("[StubSession] Error: Cannot get a scent, not connected to any device.");
-    return -1;
-  }
-
-  for (int i = 0; i < sizeof(scent); i++) {
-    if (scent[i] == name) {
-      return i;
-    }
-  }
-  return -1;
 }
 
 }  // namespace sony::olfactory_device

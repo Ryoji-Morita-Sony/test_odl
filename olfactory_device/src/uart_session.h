@@ -26,8 +26,6 @@
 #include <atomic>
 #include <queue>
 
-#define THREAD_WAIT (200)
-
 namespace sony::olfactory_device {
 
 /**
@@ -40,13 +38,6 @@ class UartSession : public DeviceSessionIF {
  private:
   HANDLE uart_handle_;  // Handle to the UART connection
   bool connected_;      // Connection status
-
-  std::thread       t_;       // Thread parameter.
-  std::atomic<bool> t_flag_;  // Flag for thread loop.
-  long long         t_wait_;  // Time waiting in thread loop, milliseconds.
-  std::string       t_cmd_;   // A command to send in thread loop.
-
-  std::string       scent[4]; // scent devices
 
  public:
   UartSession();
@@ -80,9 +71,6 @@ class UartSession : public DeviceSessionIF {
    */
   bool SendData(const std::string& data) override;
 
-  // Add any other necessary interface methods here
-  bool SendData(unsigned int data) override;
-
   /**
    * @brief Received data over the UART connection.
    *
@@ -91,52 +79,12 @@ class UartSession : public DeviceSessionIF {
    */
   bool RecvData(std::string& data) override;
 
- private:
   /**
-   * @brief Thread function.
-   */
-  void ThreadFunc() override;
-
- public:
-  /**
-   * @brief Start a thread.
+   * @brief Check if scent emission is available for the specified device.
    *
-   * @return Returns true if the session is connected, false otherwise.
+   * @return Returns true if the availability check is performed successfully, otherwise false.
    */
-  bool StartThreadFunc() override;
-
-  /**
-   * @brief Stop a thread.
-   *
-   * @return Returns true if the session is connected, false otherwise.
-   */
-  bool StopThreadFunc() override;
-
-  /**
-   * @brief Send a command like "release(0, 10)", "fan(1, 50)", "motor(1, 50)".
-   *
-   * @param cmd A command.
-   * @param wait Milliseconds waiting in thread loop.
-   * @return Returns true if the session is connected, false otherwise.
-   */
-  bool SendCmd(const std::string& cmd, long long wait) override;
-
-  /**
-   * @brief Set ID and scent-name like "rose", "lavender".
-   *
-   * @param id ID of SMA device. (0 ~ 3)
-   * @param name Name of scent.
-   * @return Returns true if it succeeded, false otherwise.
-   */
-  bool SetScent(unsigned int id, const std::string& name) override;
-
-  /**
-   * @brief Get ID from scent-name.
-   *
-   * @param name Name of scent.
-   * @return Returns id (0 ~ 3), -1 if nothing.
-   */
-  int GetScent(const std::string& name) override;
+  bool IsScentEmissionAvailable() override;
 
 };
 
