@@ -195,7 +195,6 @@ static OdResult CtrlDevice(std::string device, std::vector<std::string> vec) {
       std::cerr << "Failed to send a command." << std::endl;
       return OdResult::ERROR_UNKNOWN;
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
   return OdResult::SUCCESS;
 }
