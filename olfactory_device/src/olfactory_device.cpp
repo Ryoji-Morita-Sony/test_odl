@@ -41,7 +41,7 @@
 namespace sony::olfactory_device {
 
 // Uncomment to use the StubSession for testing
-//#define USE_STUB_SESSION
+#define USE_STUB_SESSION
 //#define USE_UART_SESSION
 
 #ifdef USE_STUB_SESSION
@@ -56,7 +56,7 @@ using SessionType = OscSession;
 //#define USE_JSON_PATH_FROM_REGISTRY_KEY
 
 
-#define FILE_DEVICE_JSON ("C:\\VisualStudioProjects\\device.json")
+#define FILE_DEVICE_JSON ("C:\\Program Files\\Sony\\Olfactory\\device.json")
 
 // Map to manage DeviceSessionIF instances by device_id
 static std::unordered_map<std::string, std::unique_ptr<DeviceSessionIF>> device_sessions;
@@ -195,6 +195,7 @@ static OdResult CtrlDevice(std::string device, std::vector<std::string> vec) {
       std::cerr << "Failed to send a command." << std::endl;
       return OdResult::ERROR_UNKNOWN;
     }
+//    std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
   return OdResult::SUCCESS;
 }
