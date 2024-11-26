@@ -259,6 +259,12 @@ OLFACTORY_DEVICE_API OdResult sony_odEndSession(const char* device_id) {
   device_sessions[ip]->Close();
   device_sessions.erase(ip);
 
+  // Check if the device has an active start time
+  auto it = device_next_available_time.find(ip);
+  if (it != device_next_available_time.end()) {
+    device_next_available_time.erase(it);
+  }
+
   spdlog::debug("{}({}): {} completed.", id, ip, __func__);
   return OdResult::SUCCESS;
 }
@@ -441,12 +447,6 @@ OLFACTORY_DEVICE_API OdResult sony_odStopScentEmission(const char* device_id) {
   if (!device_sessions[ip]->SendData(command)) {
     spdlog::error("{}({}): Failed to set SCENT.", id, ip);
     return OdResult::ERROR_UNKNOWN;
-  }
-
-  // Check if the device has an active start time
-  auto it = device_next_available_time.find(ip);
-  if (it != device_next_available_time.end()) {
-    device_next_available_time.erase(it);
   }
 
   spdlog::debug("{}({}): {} completed.", id, ip, __func__);
